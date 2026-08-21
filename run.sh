@@ -4,7 +4,7 @@
 # 用法:
 #   ./run.sh --focus "V 扩展 vstart/trap 恢复语义"                      # 扫描+验证
 #   ./run.sh --focus "V 扩展" --model claude-opus-4-7[1m]              # 指定模型
-#   ./run.sh --focus "V 扩展" --max-cycles 3                          # 外层大迭代 3 轮
+#   ./run.sh --focus "V 扩展" --max-sweeps 3                          # 外层扫荡轮 3 轮
 #   ./run.sh --suspicions hypotheses/examples/vstart-vxsat-vlen.json   # 跳过扫描, 直接验证
 #   ./run.sh --focus "CSR 同拍写顺序" --scan-only                      # 只产出疑点清单
 #
@@ -12,9 +12,9 @@
 #   --focus <text>        关注方向(自然语言), 用于 scan 阶段; 与 --suspicions 二选一
 #   --suspicions <file>   已有疑点 JSON(格式见 hypotheses/examples/), 跳过扫描
 #   --model <id>          Claude 模型 id, 默认继承当前 claude 配置
-#   --max-rounds <n>      内层迭代: Isolate 阶段每疑点变量控制轮数上限, 默认 4
-#   --max-cycles <n>      外层大迭代: 验证轮数上限(每轮汇总产出的新疑点作为
-#                         下轮输入, 直到无新疑点或达上限), 默认 1(不滚动)
+#   --max-variants <n>    内层"变体轮": Isolate 阶段每疑点只改一个变量的轮数上限, 默认 4
+#   --max-sweeps <n>      外层"扫荡轮": 疑点清单滚动验证轮数上限(每轮产出的新疑点
+#                         去重后作为下轮输入, 直到无新疑点或达上限), 默认 1(不滚动)
 #   --workspace <dir>     isla-runner 工作区根, 默认 /home/baiyifan/workplace-local/isla-runner
 #   --scan-only           只扫描产出疑点清单, 不跑验证
 #   --dry-run             只打印将执行的 claude 命令, 不运行
@@ -26,8 +26,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FOCUS=""
 SUSPICIONS=""
 MODEL=""
-MAX_ROUNDS=4
-MAX_CYCLES=1
+MAX_VARIANTS=4
+MAX_SWEEPS=1
 WORKSPACE="/home/baiyifan/workplace-local/isla-runner"
 SCAN_ONLY=0
 DRY_RUN=0
@@ -37,8 +37,10 @@ while [[ $# -gt 0 ]]; do
     --focus)        FOCUS="$2"; shift 2 ;;
     --suspicions)   SUSPICIONS="$2"; shift 2 ;;
     --model)        MODEL="$2"; shift 2 ;;
-    --max-rounds)   MAX_ROUNDS="$2"; shift 2 ;;
-    --max-cycles)   MAX_CYCLES="$2"; shift 2 ;;
+    --max-variants) MAX_VARIANTS="$2"; shift 2 ;;
+    --max-sweeps)   MAX_SWEEPS="$2"; shift 2 ;;
+    --max-rounds)   MAX_VARIANTS="$2"; shift 2 ;;   # 旧名兼容
+    --max-cycles)   MAX_SWEEPS="$2"; shift 2 ;;     # 旧名兼容
     --workspace)    WORKSPACE="$2"; shift 2 ;;
     --scan-only)    SCAN_ONLY=1; shift ;;
     --dry-run)      DRY_RUN=1; shift ;;
@@ -83,10 +85,11 @@ if [[ -z "$SUSPICIONS" ]]; then
 - 每条含 id/file/line/claim(预期错误行为: 哪个信号/寄存器会错成什么)
 - 只报你有具体触发设想的, 不报风格问题
 - 写成 JSON 到 $OUT_JSON, 格式:
-  {\"suspicions\": [{\"id\": \"S1\", \"file\": \"...\", \"line\": 123, \"claim\": \"...\"}], \"max_rounds\": $MAX_ROUNDS, \"workspace\": \"$WORKSPACE\"}
+  {\"suspicions\": [{\"id\": \"S1\", \"file\": \"...\", \"line\": 123, \"claim\": \"...\"}], \"max_variants\": $MAX_VARIANTS, \"workspace\": \"$WORKSPACE\"}
 禁止修改 XiangShan 源码。完成后回复文件路径即可。"
   [[ $SCAN_ONLY -eq 1 ]] && { echo "[run.sh] --scan-only, 结束。疑点清单: $OUT_JSON"; exit 0; }
   SUSPICIONS="$OUT_JSON"
+  [[ $DRY_RUN -eq 1 ]] && { echo "[run.sh] --dry-run: (实际运行时此处会生成 $OUT_JSON 后再进入验证)"; exit 0; }
 fi
 
 if [[ ! -f "$SUSPICIONS" ]]; then
@@ -95,12 +98,12 @@ if [[ ! -f "$SUSPICIONS" ]]; then
 fi
 
 # ---------- 阶段 2: 跑验证工作流 ----------
-echo "[run.sh] verify: workflow=rtl-directed-difftest, 疑点=$SUSPICIONS, max_rounds=$MAX_ROUNDS"
+echo "[run.sh] verify: workflow=rtl-directed-difftest, 疑点=$SUSPICIONS, max_variants=$MAX_VARIANTS, sweeps=$MAX_SWEEPS"
 ARGS_JSON="$(python3 -c "
 import json,sys
 d=json.load(open('$SUSPICIONS'))
-d.setdefault('max_rounds', $MAX_ROUNDS)
-d.setdefault('max_cycles', $MAX_CYCLES)
+d.setdefault('max_variants', $MAX_VARIANTS)
+d.setdefault('max_sweeps', $MAX_SWEEPS)
 d.setdefault('workspace', '$WORKSPACE')
 print(json.dumps(d))")"
 

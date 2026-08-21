@@ -18,13 +18,14 @@
       "claim": "预期错误行为的一句话描述（哪个信号/寄存器会错成什么）"
     }
   ],
-  "max_rounds": 5,
+  "max_variants": 5,
   "workspace": "/home/baiyifan/workplace-local/isla-runner"
 }
 ```
 
 - `workspace` 是 isla-runner 工作区根目录，DUT/REF/XiangShan 源码都在其下。
-- `max_rounds` 是 Isolate 阶段每疑点的轮数上限（建议 3-5）。
+- `max_variants` 是内层"变体轮"上限：Isolate 阶段每疑点每轮只改一个变量，建议 3-5。
+- `max_sweeps` 是外层"扫荡轮"上限：每个 sweep 验证完当前疑点清单后，Synthesize 的 follow_ups 去重（跳过已验证 id、新 id 加 `w<N>-` 前缀）作为下一个 sweep 输入；默认 1 即不滚动。
 - 疑点数量不设上限；每疑点一条独立流水线。
 
 ## 固定环境信息（写进每个需要跑仿真的 agent prompt）
@@ -34,7 +35,7 @@
 - 交叉编译：`riscv64-linux-gnu-gcc`，ELF 入口 `0x80000000`，结束放 GOODTRAP：`.word 0x0000006b`
 - emu 无波形支持（`--dump-wave` 会 SIGABRT）。取证用提交跟踪：emu 加 `-b <开始> -e <结束>`，日志含每退休指令的 pc/编码/dst/data。
 - GOODTRAP 到达 = 双方一致且自检通过；DiffTest ABORT = DUT 与 REF 分歧（本身即 bug 证据，看日志 `data` 字段的双值）。
-- 中间文件一律写 `artifacts/<suspicion.id>/round<N>/`（相对本仓库根）。
+- 中间文件一律写 `artifacts/<suspicion.id>/variant<N>/`（相对本仓库根）。
 
 ## Phase 1 — Hypothesize（假设化）
 
@@ -78,7 +79,7 @@
 ## Phase 3 — Isolate（变量控制隔离）
 
 - **由 Workflow 的 JS 循环驱动**，不是 agent 自己决定何时停。终止条件（代码判定）：
-  1. 轮数达到 `max_rounds`；
+  1. 轮数达到 `max_variants`；
   2. 连续一轮"无新信息"（新结论 ⊆ 已有结论集合）。
 - 每轮 agent 只做一件事：**改变一个变量**并重跑，变量来源是上一轮的 `next_var`。
 - 每轮产出归因到四选一：
@@ -120,7 +121,7 @@
 ## 并行与规模
 
 - 疑点间流水线**不互等**，各自 Hypothesize→…→Skeptic 独立推进，仅最后 barrier 到 Synthesize。
-- 每疑点 3-6 个 agent（Hypothesize 1 + Probe 1 + Isolate 每轮 1×max_rounds（实际通常 1-2 轮收敛即停）+ Skeptic 1）。
+- 每疑点 3-6 个 agent（Hypothesize 1 + Probe 1 + Isolate 每轮 1×max_variants（实际通常 1-2 轮收敛即停）+ Skeptic 1）。
 - 10 个疑点约 40 个 agent；短路的 unreachable 疑点只用 2 个（Hypothesize + Skeptic）。
 
 ## 非目标

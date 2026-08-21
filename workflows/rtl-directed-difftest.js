@@ -19,7 +19,7 @@ function envBlock(workspace) {
 - emu 无波形支持(--dump-wave 会 SIGABRT); 取证用提交跟踪: emu 加 -b <开始> -e <结束>, 日志含每退休指令的 pc/编码/dst/data
 - GOODTRAP 到达 = 双方一致且自检通过; DiffTest ABORT = DUT 与 REF 分歧(本身即 bug 证据, 看日志 data 字段的双值)
 - XiangShan 源码根: ${workspace}/difftest-xiangshan/xiangshan (禁止修改其中任何文件)
-- 中间文件一律写 artifacts/<疑点id>/round<N>/ 下（相对本仓库根目录）`;
+- 中间文件一律写 artifacts/<疑点id>/variant<N>/ 下（相对本仓库根目录）`;
 }
 
 const reportHint =
@@ -103,7 +103,7 @@ const synthSchema = {
     findings_draft: { type: "string" },
     follow_ups: {
       type: "array",
-      description: "本轮发现的新疑点(副产品/覆盖缺口), 供外层大迭代作为下轮输入",
+      description: "本扫荡轮(sweep)发现的新疑点(副产品/覆盖缺口), 作为下一个 sweep 的输入; id 若与已验证疑点重复会被跳过",
       items: { type: "object", properties: { id: {type:"string"}, file: {type:"string"}, line: {}, claim: {type:"string"} }, required: ["id","file","claim"] },
     },
   },
@@ -123,7 +123,7 @@ const run = (ph, label, prompt, schema) =>
 
 // Workflow 引擎自动提供全局 args; 由调用方把疑点 JSON 内容直接作为 args 传入
 // verifyOneBatch: 跑一批疑点, 返回 { synthesis, per_suspicion }
-async function verifyOneBatch(suspicions, max_rounds, workspace) {
+async function verifyOneBatch(suspicions, max_variants, workspace) {
   // 每疑点一条独立流水线，互不等待
   const perSuspicion = suspicions.map(async (s) => {
     const suspicionDesc = `疑点 ${s.id}: ${s.file}:${s.line}
@@ -172,12 +172,12 @@ ${suspicionDesc}
 2. 一致性追问: 即使疑点被证伪，也必须在 trap 返回 / flushPipe / vsetvli 重配置之后再次读回向量寄存器和 CSR，对比 emu 与 NEMU。真 bug 常藏在掩盖原疑点的路径里。
 3. 决定性实验: 读一个从未被写过的相邻向量寄存器，判断污染是否经旁路/检查点扩散。
 
-取证据: emu 加 -b <开始> -e <结束> 提交跟踪。所有源码/ELF/日志存到 artifacts/${s.id}/round1/。${reportHint}`,
+取证据: emu 加 -b <开始> -e <结束> 提交跟踪。所有源码/ELF/日志存到 artifacts/${s.id}/variant1/。${reportHint}`,
         schema: probeSchema });
       results.probe = probe;
 
-      // Phase 3: Isolate — JS 循环驱动，终止由代码判
-      let round = 1;
+      // Phase 3: Isolate — 变体轮(variant)循环, 每轮只改一个变量; 终止由代码判
+      let variant = 1;
       let nextVar = probe.next_var;
       const attributions = [];
       let repros = 0;
@@ -185,8 +185,8 @@ ${suspicionDesc}
       let idleRounds = 0;
       const maxIdle = 1; // 连续一轮无新信息即停
 
-      while (round < max_rounds && idleRounds <= maxIdle) {
-        const r = await run("isolate", `Isolate ${s.id} round ${round + 1}`, `你是验证工程师。${envBlock(workspace)}
+      while (variant < max_variants && idleRounds <= maxIdle) {
+        const r = await run("isolate", `Isolate ${s.id} variant ${variant + 1}`, `你是验证工程师。${envBlock(workspace)}
 
 ${suspicionDesc}
 
@@ -194,9 +194,9 @@ ${suspicionDesc}
 其余一切保持不变。变量类型举例: 换指令/换参数(vstart/vl/sew/lmul)、换目标寄存器(读从未被写过的寄存器)、调整指令顺序/间距。
 - 时通时不通则多跑几次记录复现率 repro_rate = 复现次数/尝试次数 (0<r<1 判竞态特征)。
 - new_information: 本轮结论是否提供了上一轮没有的新信息。
-产物存到 artifacts/${s.id}/round${round + 1}/。${reportHint}`,
+产物存到 artifacts/${s.id}/variant${variant + 1}/。${reportHint}`,
           schema: isolateSchema });
-        round += 1;
+        variant += 1;
         attributions.push(r.attribution);
         if (r.attribution !== "not-reproducible") {
           repros += 1;
@@ -211,7 +211,7 @@ ${suspicionDesc}
         results.isolate = r;
       }
       if (results.isolate) {
-        results.isolate.rounds_used = round;
+        results.isolate.variants_used = variant;
         results.isolate.repro_rate = attempts > 0 ? repros / attempts : 0;
       }
     }
@@ -261,20 +261,20 @@ ${reportHint}`,
 
 // ---- 外层大迭代(loop-until-dry) ----
 // 每轮 Synthesize 的 follow_ups 作为下一轮疑点输入;
-// 终止: 轮数达 max_cycles 或 follow_ups 为空
+// 终止: 轮数达 max_sweeps 或 follow_ups 为空
 async function main(args) {
-  const maxCycles = args.max_cycles || 1;
+  const maxSweeps = args.max_sweeps || 1;
   const batchResults = [];
   let queue = args.suspicions;
-  for (let cycle = 1; cycle <= maxCycles && queue.length > 0; cycle++) {
-    log(`cycle ${cycle}/${maxCycles}: ${queue.length} 个疑点`);
-    const r = await verifyOneBatch(queue, args.max_rounds || 5, args.workspace);
+  for (let cycle = 1; cycle <= maxSweeps && queue.length > 0; cycle++) {
+    log(`cycle ${cycle}/${maxSweeps}: ${queue.length} 个疑点`);
+    const r = await verifyOneBatch(queue, args.max_variants || 5, args.workspace);
     r.cycle = cycle;
     batchResults.push(r);
     queue = (r.synthesis && r.synthesis.follow_ups) || [];
   }
   if (queue.length > 0)
-    log(`已达 max_cycles=${maxCycles}, 剩余未验证疑点 ${queue.length} 条(见最后一轮 follow_ups)`);
+    log(`已达 max_sweeps=${maxSweeps}, 剩余未验证疑点 ${queue.length} 条(见最后一轮 follow_ups)`);
   return { batches: batchResults, unfinished: queue };
 }
 

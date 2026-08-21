@@ -5,7 +5,7 @@
 ## 流程图
 
 ```
- 输入: suspicions[{id,file,line,claim}] + max_rounds + workspace
+ 输入: suspicions[{id,file,line,claim}] + max_variants + workspace
    |
    v
 +--------------------------------------------------------------+
