@@ -17,7 +17,7 @@
 #   --max-variants <n>    内层"变体轮": Isolate 阶段每疑点只改一个变量的轮数上限, 默认 4
 #   --max-sweeps <n>      外层"扫荡轮": 疑点清单滚动验证轮数上限(每轮产出的新疑点
 #                         去重后作为下轮输入, 直到无新疑点或达上限), 默认 1(不滚动)
-#   --workspace <dir>     isla-runner 工作区根, 默认 /home/baiyifan/workplace-local/isla-runner
+#   --workspace <dir>     xiangshan submodule 目录, 默认 <本仓库>/xiangshan (一般无需指定)
 #   --scan-only           只扫描产出疑点清单, 不跑验证
 #   --dry-run             只打印将执行的 claude 命令, 不运行
 #   -h | --help           本帮助
@@ -31,7 +31,7 @@ MODEL=""
 MAX_SUSPICIONS=8
 MAX_VARIANTS=4
 MAX_SWEEPS=1
-WORKSPACE="/home/baiyifan/workplace-local/isla-runner"
+WORKSPACE="$REPO_ROOT/xiangshan"
 SCAN_ONLY=0
 DRY_RUN=0
 
@@ -82,14 +82,14 @@ mkdir -p "$REPO_ROOT/hypotheses" "$REPO_ROOT/artifacts"
 if [[ -z "$SUSPICIONS" ]]; then
   OUT_JSON="$REPO_ROOT/hypotheses/scan-${STAMP}.json"
   echo "[run.sh] scan: 关注方向=「$FOCUS」 -> $OUT_JSON"
-  run_claude "你是 RTL 审查专家。仓库 $WORKSPACE/difftest-xiangshan/xiangshan (kunminghu-v3, MinimalConfig, VLEN=128)。
+  run_claude "你是 RTL 审查专家。仓库 $WORKSPACE (submodule, pin 7bf51a8, kunminghu-v3, MinimalConfig, VLEN=128)。
 关注方向: $FOCUS
 
 阅读本仓库 docs/workflow-detailed.md 了解疑点格式后, 静态审查相关 RTL, 产出最多 $MAX_SUSPICIONS 个高价值疑点(suspicion)(宁缺毋滥, 不足上限也可以):
 - 每条含 id/file/line/claim(预期错误行为: 哪个信号/寄存器会错成什么)
 - 只报你有具体触发设想的, 不报风格问题
 - 写成 JSON 到 $OUT_JSON, 格式:
-  {\"suspicions\": [{\"id\": \"S1\", \"file\": \"...\", \"line\": 123, \"claim\": \"...\"}], \"max_variants\": $MAX_VARIANTS, \"workspace\": \"$WORKSPACE\"}
+  {\"suspicions\": [{\"id\": \"S1\", \"file\": \"...\", \"line\": 123, \"claim\": \"...\"}], \"max_variants\": $MAX_VARIANTS}
 禁止修改 XiangShan 源码。完成后回复文件路径即可。"
   [[ $SCAN_ONLY -eq 1 ]] && { echo "[run.sh] --scan-only, 结束。疑点清单: $OUT_JSON"; exit 0; }
   SUSPICIONS="$OUT_JSON"
@@ -102,13 +102,13 @@ if [[ ! -f "$SUSPICIONS" ]]; then
 fi
 
 # ---------- 阶段 2: 跑验证工作流 ----------
+echo "[run.sh] 提示: xiangshan/build/emu 缺失时先跑 ./scripts/setup-env.sh"
 echo "[run.sh] verify: workflow=rtl-directed-difftest, 疑点=$SUSPICIONS, variants=$MAX_VARIANTS, sweeps=$MAX_SWEEPS"
 ARGS_JSON="$(python3 -c "
 import json,sys
 d=json.load(open('$SUSPICIONS'))
 d.setdefault('max_variants', $MAX_VARIANTS)
 d.setdefault('max_sweeps', $MAX_SWEEPS)
-d.setdefault('workspace', '$WORKSPACE')
 print(json.dumps(d))")"
 
 run_claude "用 workflow 跑 $REPO_ROOT/workflows/rtl-directed-difftest.js(scriptPath 加载), args 直接使用以下 JSON 内容:

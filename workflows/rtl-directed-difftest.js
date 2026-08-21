@@ -11,14 +11,16 @@ export const meta = {
 };
 
 // ---- 环境信息（写进所有需要跑仿真的 agent prompt） ----
-function envBlock(workspace) {
-  return `## 环境（已就绪，勿重建）
-- DUT emu: ${workspace}/difftest-xiangshan/xiangshan/build/emu (MinimalConfig, VLEN=128, Verilator)
-- REF: ${workspace}/difftest-xiangshan/xiangshan/ready-to-run/riscv64-nemu-interpreter-so
-- 交叉编译: riscv64-linux-gnu-gcc; ELF 入口 0x80000000; 结束放 GOODTRAP: .word 0x0000006b
+// 所有路径相对本仓库(directed-difftest)根; xiangshan 是 submodule(pin 7bf51a8),
+// 首次使用先跑 ./scripts/setup-env.sh 拷入预编译 emu 与 REF
+function envBlock() {
+  return `## 环境（勿重建; 若 xiangshan/build/emu 缺失, 提示用户跑 ./scripts/setup-env.sh）
+- DUT emu: xiangshan/build/emu (MinimalConfig, VLEN=128, Verilator)
+- REF: xiangshan/ready-to-run/riscv64-nemu-interpreter-so
+- 交叉编译: riscv64-unknown-elf-gcc -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld (入口 0x80000000); 结束放 GOODTRAP: .word 0x0000006b
 - emu 无波形支持(--dump-wave 会 SIGABRT); 取证用提交跟踪: emu 加 -b <开始> -e <结束>, 日志含每退休指令的 pc/编码/dst/data
-- GOODTRAP 到达 = 双方一致且自检通过; DiffTest ABORT = DUT 与 REF 分歧(本身即 bug 证据, 看日志 data 字段的双值)
-- XiangShan 源码根: ${workspace}/difftest-xiangshan/xiangshan (禁止修改其中任何文件)
+- GOODTRAP 到达 = 双方一致且自检通过; ABORT = DUT 与 REF 分歧(本身即 bug 证据, 看日志 data 字段的双值)
+- XiangShan 源码在 submodule xiangshan/ (禁止修改其中任何文件)
 - 中间文件一律写 artifacts/<疑点id>/variant<N>/ 下（相对本仓库根目录）`;
 }
 
@@ -123,14 +125,14 @@ const run = (ph, label, prompt, schema) =>
 
 // Workflow 引擎自动提供全局 args; 由调用方把疑点 JSON 内容直接作为 args 传入
 // verifyOneBatch: 跑一批疑点, 返回 { synthesis, per_suspicion }
-async function verifyOneBatch(suspicions, max_variants, workspace) {
+async function verifyOneBatch(suspicions, max_variants) {
   // 每疑点一条独立流水线，互不等待
   const perSuspicion = suspicions.map(async (s) => {
     const suspicionDesc = `疑点 ${s.id}: ${s.file}:${s.line}
 预期错误(claim): ${s.claim}`;
 
     // Phase 1: Hypothesize — 只读代码
-    const hypothesis = await run("hypothesize", `Hypothesize ${s.id}`, `你是 RTL 阅读专家。${envBlock(workspace)}
+    const hypothesis = await run("hypothesize", `Hypothesize ${s.id}`, `你是 RTL 阅读专家。${envBlock()}
 
 ${suspicionDesc}
 
@@ -157,7 +159,7 @@ ${reportHint}`,
       results.skipped_simulation = true;
     } else {
       // Phase 2: Probe — 首测 + 灵敏度对照 + 一致性追问
-      const probe = await run("probe", `Probe ${s.id}`, `你是验证工程师。${envBlock(workspace)}
+      const probe = await run("probe", `Probe ${s.id}`, `你是验证工程师。${envBlock()}
 
 ${suspicionDesc}
 
@@ -167,7 +169,7 @@ ${suspicionDesc}
 - masking: ${hypothesis.masking}
 - sensitivity: ${hypothesis.sensitivity}
 
-按本仓库 templates/case-template.S 骨架构造汇编自检用例（setup 设 vsetvli + 可辨识初值 -> trigger -> check 用 vmv.x.s/csrr 读回并 beq/bne 分支到 FAIL -> GOODTRAP .word 0x0000006b），用 riscv64-linux-gnu-gcc 编译成 ELF（入口 0x80000000），跑 emu vs NEMU DiffTest。同时无条件做三件事：
+按本仓库 templates/case-template.S 骨架构造汇编自检用例（setup 设 vsetvli + 可辨识初值 -> trigger -> check 用 vmv.x.s/csrr 读回并 beq/bne 分支到 FAIL -> GOODTRAP .word 0x0000006b），用 riscv64-unknown-elf-gcc 编译成 ELF（入口 0x80000000），跑 emu vs NEMU DiffTest。同时无条件做三件事：
 1. 灵敏度对照: 先跑一个"已知应有差异"的对照用例（如不执行清零指令、确认目标状态真的被改变），证明用例不是恒真。
 2. 一致性追问: 即使疑点被证伪，也必须在 trap 返回 / flushPipe / vsetvli 重配置之后再次读回向量寄存器和 CSR，对比 emu 与 NEMU。真 bug 常藏在掩盖原疑点的路径里。
 3. 决定性实验: 读一个从未被写过的相邻向量寄存器，判断污染是否经旁路/检查点扩散。
@@ -186,7 +188,7 @@ ${suspicionDesc}
       const maxIdle = 1; // 连续 maxIdle 轮无新信息即停(与文档一致: 一轮即停)
 
       while (variant <= max_variants && idleRounds < maxIdle) {
-        const r = await run("isolate", `Isolate ${s.id} variant ${variant + 1}`, `你是验证工程师。${envBlock(workspace)}
+        const r = await run("isolate", `Isolate ${s.id} variant ${variant + 1}`, `你是验证工程师。${envBlock()}
 
 ${suspicionDesc}
 
@@ -220,7 +222,7 @@ ${suspicionDesc}
     const skepticInput = results.skipped_simulation
       ? `该疑点被 Hypothesize 判为 unreachable（跳过了仿真）。你的任务是逐行读代码复核这个"不可达"判断本身是否成立。`
       : `现有结论摘要: probe=${JSON.stringify(results.probe)}; isolate=${JSON.stringify(results.isolate)}`;
-    results.skeptic = await run("skeptic", `Skeptic ${s.id}`, `你是专门的"推翻者"，任务不是验证而是推翻现有结论。${envBlock(workspace)}
+    results.skeptic = await run("skeptic", `Skeptic ${s.id}`, `你是专门的"推翻者"，任务不是验证而是推翻现有结论。${envBlock()}
 
 ${suspicionDesc}
 
@@ -268,7 +270,7 @@ async function main(args) {
   let queue = args.suspicions;
   for (let cycle = 1; cycle <= maxSweeps && queue.length > 0; cycle++) {
     log(`cycle ${cycle}/${maxSweeps}: ${queue.length} 个疑点`);
-    const r = await verifyOneBatch(queue, args.max_variants || 5, args.workspace);
+    const r = await verifyOneBatch(queue, args.max_variants || 4);
     r.cycle = cycle;
     batchResults.push(r);
     queue = (r.synthesis && r.synthesis.follow_ups) || [];

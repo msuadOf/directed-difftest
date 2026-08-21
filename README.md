@@ -69,9 +69,12 @@
 - `templates/` — 汇编自检用例模板 + 单用例编译/运行脚本骨架
 - `artifacts/` — 每疑点每轮的中间产物（用例源码、ELF、日志）
 - `AGENTS.md` — 给未来 agent 的规则，干活前必读
+- `xiangshan/` — XiangShan submodule（pin 7bf51a8）；`scripts/setup-env.sh` — 环境初始化/拷贝预编译产物/自检
 
 ## 与 isla-runner 工作区的关系
 
-- DUT/REF/工具链均位于 `isla-runner` 工作区：emu 为 `difftest-xiangshan/xiangshan/build/emu`，REF 为 `difftest-xiangshan/xiangshan/ready-to-run/riscv64-nemu-interpreter-so`，交叉编译器 `riscv64-linux-gnu-gcc`。
-- 方法论源自 isla-runner 的 `.claude/skills/rtl-difftest/SKILL.md` 与 `agents/findings.md` 中的实测记录；本仓库是其"多疑点、多 agent、带对抗复核"的工程化版本。
+- XiangShan 以 submodule 固定在本仓库 `xiangshan/`（pin 7bf51a8）。首次使用：`./scripts/setup-env.sh`——从已有编译产物 rsync `build/emu` 与 REF（免 Verilator 重编，约 4GB），并自检工具链；`./scripts/setup-env.sh --check` 仅自检；`SRC_XIANGSHAN=... ` 可指定拷贝源，`SKIP_COPY=1` 跳过拷贝自编。
+- 交叉编译器 `riscv64-unknown-elf-gcc` 需本机可用（setup 自检会查）。
+- 方法论源自 isla-runner 工作区 `.claude/skills/rtl-difftest` 与 `agents/findings.md` 的实测记录；本仓库是其"多疑点、多 agent、带对抗复核"的工程化版本。
 - 本仓库只做验证与沉淀，**不修改任何 XiangShan RTL 源码**，不自动开 PR。
+- `xiangshan/` 内的 `build/`、`ready-to-run/` 产物不入库（体积大），由 setup-env.sh 恢复。

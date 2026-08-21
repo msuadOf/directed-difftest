@@ -23,17 +23,18 @@
 }
 ```
 
-- `workspace` 是 isla-runner 工作区根目录，DUT/REF/XiangShan 源码都在其下。
 - `max_variants` 是内层"变体轮"上限：Isolate 阶段每疑点每轮只改一个变量，建议 3-5。
 - `max_sweeps` 是外层"扫荡轮"上限：每个 sweep 验证完当前疑点清单后，Synthesize 的 follow_ups 去重（跳过已验证 id、新 id 加 `w<N>-` 前缀）作为下一个 sweep 输入；默认 1 即不滚动。
 - 疑点数量不设上限；每疑点一条独立流水线。
 
 ## 固定环境信息（写进每个需要跑仿真的 agent prompt）
 
-- DUT emu：`<workspace>/difftest-xiangshan/xiangshan/build/emu`（MinimalConfig, VLEN=128, Verilator）
-- REF：`<workspace>/difftest-xiangshan/xiangshan/ready-to-run/riscv64-nemu-interpreter-so`
-- 交叉编译：`riscv64-linux-gnu-gcc`，ELF 入口 `0x80000000`，结束放 GOODTRAP：`.word 0x0000006b`
-- emu 无波形支持（`--dump-wave` 会 SIGABRT）。取证用提交跟踪：emu 加 `-b <开始> -e <结束>`，日志含每退休指令的 pc/编码/dst/data。
+- XiangShan 以 submodule 形式放在本仓库 `xiangshan/`（pin 7bf51a8，kunminghu-v3）；首次使用跑 `./scripts/setup-env.sh`（拷入预编译 emu 与 REF，免 Verilator 重编；`--check` 只自检）
+- DUT emu：`xiangshan/build/emu`（MinimalConfig, VLEN=128, Verilator）
+- REF：`xiangshan/ready-to-run/riscv64-nemu-interpreter-so`
+- 交叉编译：`riscv64-unknown-elf-gcc -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld`（入口 `0x80000000`），结束放 GOODTRAP：`.word 0x0000006b`
+- emu 运行：`./xiangshan/build/emu -b <s> -e <e> -i <elf> --diff xiangshan/ready-to-run/riscv64-nemu-interpreter-so`；GOODTRAP 判定串为 `HIT GOOD TRAP`
+- emu 无波形支持（`--dump-wave` 会 SIGABRT）。取证用提交跟踪：emu 加 `-b/-e`（周期范围），提交跟踪日志含每退休指令的 pc/编码/dst/data。
 - GOODTRAP 到达 = 双方一致且自检通过；DiffTest ABORT = DUT 与 REF 分歧（本身即 bug 证据，看日志 `data` 字段的双值）。
 - 中间文件一律写 `artifacts/<suspicion.id>/variant<N>/`（相对本仓库根）。
 

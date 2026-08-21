@@ -19,7 +19,6 @@
       "claim": "maxVLMAX 疑似硬编码，非默认 SEW/LMUL 组合下 vlmax 计算可能错误，尾部/活跃掩码生成越界或漏元素"
     }
   ],
-  "workspace": "/home/baiyifan/workplace-local/isla-runner",
   "max_variants": 4,
   "max_sweeps": 1
 }
