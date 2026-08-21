@@ -18,13 +18,25 @@
 }
 ```
 
-2. 在 Claude Code 会话中运行（Workflow 无独立 CLI，由会话内的 Workflow 工具加载脚本并把疑点 JSON 内容作为 args 传入）：
+2. 或者用一键入口 `run.sh`（headless，两阶段：扫描方向→疑点清单→验证工作流）：
+
+```
+./run.sh --focus "V 扩展 vstart/trap 恢复语义"                       # 扫描+验证
+./run.sh --focus "V 扩展" --model claude-opus-4-7[1m] --max-rounds 4  # 指定模型/轮数
+./run.sh --suspicions hypotheses/examples/vstart-vxsat-vlen.json     # 跳过扫描直接验证
+./run.sh --focus "CSR 同拍写顺序" --scan-only                        # 只产出疑点清单
+./run.sh ... --dry-run                                               # 只看将执行的命令
+```
+
+注意：headless 验证阶段需要执行 bash（emu/gcc），请先在 settings.json 预放行相关命令，否则会在权限点失败。
+
+3. 也可在 Claude Code 会话中手动运行（Workflow 由会话内的 Workflow 工具加载脚本并把疑点 JSON 内容作为 args 传入）：
 
 ```
 用 workflow 跑 workflows/rtl-directed-difftest.js，args 用 hypotheses/examples/vstart-vxsat-vlen.json 的内容
 ```
 
-（也可按 `docs/workflow-detailed.md` 手动逐阶段执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。）
+（还可按 `docs/workflow-detailed.md` 手动逐阶段执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。）
 
 3. 中间产物在 `artifacts/<疑点id>/round<N>/`，最终汇总结论由 Synthesize 阶段输出（三分类 + 证据链 + findings.md 草稿）。
 
