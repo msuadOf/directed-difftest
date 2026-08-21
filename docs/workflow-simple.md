@@ -57,11 +57,9 @@
 | 被机制天然规避 | 写明是哪条机制代码拦截的（须逐行核对过） |
 | 当前配置不可达 | 写明何时会暴露（如换 VLEN/配置参数后） |
 
-## 动机实例（2026-08-21 三个疑点，恰好各落一类）
+## 动机实例
 
-- **S1 → 真实 bug，但藏在掩盖路径里**：`VIAluFix.scala:105` vstart 硬编码 0.U 被判 illegal 的前置检查（`VecExceptionGen.scala:280`）完全掩盖；但在 illegal trap 返回后读回 `vmv.x.s a0, v3`，DUT 得 `0xffffffff00000055`、NEMU 得 `0x55`——tail-agnostic 污染经 trap flush 扩散到读旁路，ABORT 可复现（详见 detailed 文档）。
-- **S2 → 机制天然规避**：`Unprivileged.scala:106` vxsat 的"软件写后又被 robCommit OR"看似顺序 bug，但 CSR 指令是 `noSpec+blockBack`，csrw 落盘比 OR 晚一拍以上；36 用例全过，对照实验证明用例有灵敏度。
-- **S3 → 当前配置不可达**：`ByteMaskTailGen.scala` maxVLMAX 硬编码 128 在 VLEN=128 恰好占满不溢出（极限用例 SEW=8/m8/vl=128 全过）；VLEN=256 会 elaboration 编译失败而非静默出错。
+三个实测疑点恰好各落一类：S1 vstart 硬编码被 illegal 检查掩盖、但掩盖路径中测出 tail-agnostic 污染真 bug；S2 vxsat 顺序问题被 CSR `noSpec+blockBack` 机制天然规避；S3 ByteMaskTailGen VLEN 硬编码当前配置不可达。完整案例见 [motivation.md](motivation.md)。
 
 ## 关键教训
 

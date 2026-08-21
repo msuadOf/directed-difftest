@@ -32,6 +32,7 @@
 
 - `docs/workflow-simple.md` — 一页纸流程简版
 - `docs/workflow-detailed.md` — 详细设计文档（各阶段输入/输出/agent 职责）
+- `docs/motivation.md` — 动机实例：三个实测疑点，含 S1 真 bug 的完整发现过程
 - `workflows/rtl-directed-difftest.js` — 可执行的 Workflow 脚本
 - `hypotheses/` — 疑点清单输入（含示例）
 - `templates/` — 汇编自检用例模板 + 单用例编译/运行脚本骨架
