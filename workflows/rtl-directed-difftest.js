@@ -263,7 +263,7 @@ ${reportHint}`,
 // 每轮 Synthesize 的 follow_ups 作为下一轮疑点输入;
 // 终止: 轮数达 max_sweeps 或 follow_ups 为空
 async function main(args) {
-  const maxSweeps = args.max_sweeps || 1;
+  const maxSweeps = args.max_sweeps || 4;
   const batchResults = [];
   let queue = args.suspicions;
   for (let cycle = 1; cycle <= maxSweeps && queue.length > 0; cycle++) {
