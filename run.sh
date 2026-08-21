@@ -5,6 +5,7 @@
 #   ./run.sh --focus "V 扩展 vstart/trap 恢复语义"                      # 扫描+验证
 #   ./run.sh --focus "V 扩展" --model claude-opus-4-7[1m]              # 指定模型
 #   ./run.sh --focus "V 扩展" --max-sweeps 3                          # 外层扫荡轮 3 轮
+#   ./run.sh --focus "V 扩展" --max-suspicions 5                     # 扫描阶段最多产出 5 条疑点
 #   ./run.sh --suspicions hypotheses/examples/vstart-vxsat-vlen.json   # 跳过扫描, 直接验证
 #   ./run.sh --focus "CSR 同拍写顺序" --scan-only                      # 只产出疑点清单
 #
@@ -12,6 +13,7 @@
 #   --focus <text>        关注方向(自然语言), 用于 scan 阶段; 与 --suspicions 二选一
 #   --suspicions <file>   已有疑点 JSON(格式见 hypotheses/examples/), 跳过扫描
 #   --model <id>          Claude 模型 id, 默认继承当前 claude 配置
+#   --max-suspicions <n>  scan 阶段产出的疑点数量上限, 默认 8
 #   --max-variants <n>    内层"变体轮": Isolate 阶段每疑点只改一个变量的轮数上限, 默认 4
 #   --max-sweeps <n>      外层"扫荡轮": 疑点清单滚动验证轮数上限(每轮产出的新疑点
 #                         去重后作为下轮输入, 直到无新疑点或达上限), 默认 1(不滚动)
@@ -26,6 +28,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FOCUS=""
 SUSPICIONS=""
 MODEL=""
+MAX_SUSPICIONS=8
 MAX_VARIANTS=4
 MAX_SWEEPS=1
 WORKSPACE="/home/baiyifan/workplace-local/isla-runner"
@@ -37,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --focus)        FOCUS="$2"; shift 2 ;;
     --suspicions)   SUSPICIONS="$2"; shift 2 ;;
     --model)        MODEL="$2"; shift 2 ;;
+    --max-suspicions) MAX_SUSPICIONS="$2"; shift 2 ;;
     --max-variants) MAX_VARIANTS="$2"; shift 2 ;;
     --max-sweeps)   MAX_SWEEPS="$2"; shift 2 ;;
     --max-rounds)   MAX_VARIANTS="$2"; shift 2 ;;   # 旧名兼容
@@ -81,7 +85,7 @@ if [[ -z "$SUSPICIONS" ]]; then
   run_claude "你是 RTL 审查专家。仓库 $WORKSPACE/difftest-xiangshan/xiangshan (kunminghu-v3, MinimalConfig, VLEN=128)。
 关注方向: $FOCUS
 
-阅读本仓库 docs/workflow-detailed.md 了解疑点格式后, 静态审查相关 RTL, 产出 3-8 个高价值疑点(suspicion):
+阅读本仓库 docs/workflow-detailed.md 了解疑点格式后, 静态审查相关 RTL, 产出最多 $MAX_SUSPICIONS 个高价值疑点(suspicion)(宁缺毋滥, 不足上限也可以):
 - 每条含 id/file/line/claim(预期错误行为: 哪个信号/寄存器会错成什么)
 - 只报你有具体触发设想的, 不报风格问题
 - 写成 JSON 到 $OUT_JSON, 格式:
@@ -98,7 +102,7 @@ if [[ ! -f "$SUSPICIONS" ]]; then
 fi
 
 # ---------- 阶段 2: 跑验证工作流 ----------
-echo "[run.sh] verify: workflow=rtl-directed-difftest, 疑点=$SUSPICIONS, max_variants=$MAX_VARIANTS, sweeps=$MAX_SWEEPS"
+echo "[run.sh] verify: workflow=rtl-directed-difftest, 疑点=$SUSPICIONS, variants=$MAX_VARIANTS, sweeps=$MAX_SWEEPS"
 ARGS_JSON="$(python3 -c "
 import json,sys
 d=json.load(open('$SUSPICIONS'))

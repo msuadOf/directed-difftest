@@ -19,7 +19,7 @@
 ./run.sh ... --dry-run                                                # 只看将执行的命令
 ```
 
-全部参数见 `./run.sh --help`（--focus/--suspicions/--model/--max-variants/--max-sweeps/--workspace/--scan-only/--dry-run）。
+全部参数见 `./run.sh --help`（--focus/--suspicions/--model/--max-suspicions/--max-variants/--max-sweeps/--workspace/--scan-only/--dry-run）。`--max-suspicions` 控制扫描阶段产出的疑点数量上限（默认 8），间接控制总 agent 数与耗时（每疑点约 3-6 个 agent）。
 
 注意：headless 验证阶段需要执行 bash（emu/gcc），请先在 settings.json 预放行相关命令，否则会在权限点失败。
 
