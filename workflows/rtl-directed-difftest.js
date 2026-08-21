@@ -1,6 +1,7 @@
 // RTL 疑点定向 DiffTest 验证工作流
 // 设计文档: docs/workflow-detailed.md
-// 用法: claude --workflow workflows/rtl-directed-difftest.js <hypotheses.json>
+// 用法: 在 Claude Code 会话中说"用 workflow 跑 rtl-directed-difftest, 疑点文件 hypotheses/xxx.json"
+// (Workflow 工具以 scriptPath 加载本文件, 疑点 JSON 内容经 args 传入)
 
 export const meta = {
   name: "rtl-directed-difftest",
@@ -111,8 +112,14 @@ const synthSchema = {
 };
 
 // ---- pipeline ----
-export default async function pipeline({ input, phase }) {
-  const { suspicions, max_rounds = 5, workspace } = input;
+// agent 包装: 统一带 phase 归组与结构化 schema
+const run = (ph, label, prompt, schema) =>
+  agent(prompt, { label, phase: ph, schema });
+
+// Workflow 引擎自动提供全局 args; 由调用方把疑点 JSON 内容直接作为 args 传入
+async function main(args) {
+  const { suspicions, max_rounds = 5 } = args;
+  const workspace = inp.workspace || "/home/baiyifan/workplace-local/isla-runner";
 
   // 每疑点一条独立流水线，互不等待
   const perSuspicion = suspicions.map(async (s) => {
@@ -120,9 +127,7 @@ export default async function pipeline({ input, phase }) {
 预期错误(claim): ${s.claim}`;
 
     // Phase 1: Hypothesize — 只读代码
-    const hypothesis = await phase("hypothesize", {
-      description: `Hypothesize ${s.id}`,
-      prompt: `你是 RTL 阅读专家。${envBlock(workspace)}
+    const hypothesis = await run("hypothesize", `Hypothesize ${s.id}`, `你是 RTL 阅读专家。${envBlock(workspace)}
 
 ${suspicionDesc}
 
@@ -134,8 +139,7 @@ ${suspicionDesc}
 5. sensitivity: 用什么初值/参数能区分"旧值保留"与"算错的新值"（如 0x5A vs 0x70）
 
 ${reportHint}`,
-      schema: hypothesizeSchema,
-    });
+      schema: hypothesizeSchema });
 
     let results = {
       id: s.id,
@@ -150,9 +154,7 @@ ${reportHint}`,
       results.skipped_simulation = true;
     } else {
       // Phase 2: Probe — 首测 + 灵敏度对照 + 一致性追问
-      const probe = await phase("probe", {
-        description: `Probe ${s.id}`,
-        prompt: `你是验证工程师。${envBlock(workspace)}
+      const probe = await run("probe", `Probe ${s.id}`, `你是验证工程师。${envBlock(workspace)}
 
 ${suspicionDesc}
 
@@ -168,8 +170,7 @@ ${suspicionDesc}
 3. 决定性实验: 读一个从未被写过的相邻向量寄存器，判断污染是否经旁路/检查点扩散。
 
 取证据: emu 加 -b <开始> -e <结束> 提交跟踪。所有源码/ELF/日志存到 artifacts/${s.id}/round1/。${reportHint}`,
-        schema: probeSchema,
-      });
+        schema: probeSchema });
       results.probe = probe;
 
       // Phase 3: Isolate — JS 循环驱动，终止由代码判
@@ -182,9 +183,7 @@ ${suspicionDesc}
       const maxIdle = 1; // 连续一轮无新信息即停
 
       while (round < max_rounds && idleRounds <= maxIdle) {
-        const r = await phase("isolate", {
-          description: `Isolate ${s.id} round ${round + 1}`,
-          prompt: `你是验证工程师。${envBlock(workspace)}
+        const r = await run("isolate", `Isolate ${s.id} round ${round + 1}`, `你是验证工程师。${envBlock(workspace)}
 
 ${suspicionDesc}
 
@@ -193,8 +192,7 @@ ${suspicionDesc}
 - 时通时不通则多跑几次记录复现率 repro_rate = 复现次数/尝试次数 (0<r<1 判竞态特征)。
 - new_information: 本轮结论是否提供了上一轮没有的新信息。
 产物存到 artifacts/${s.id}/round${round + 1}/。${reportHint}`,
-          schema: isolateSchema,
-        });
+          schema: isolateSchema });
         round += 1;
         attributions.push(r.attribution);
         if (r.attribution !== "not-reproducible") {
@@ -219,9 +217,7 @@ ${suspicionDesc}
     const skepticInput = results.skipped_simulation
       ? `该疑点被 Hypothesize 判为 unreachable（跳过了仿真）。你的任务是逐行读代码复核这个"不可达"判断本身是否成立。`
       : `现有结论摘要: probe=${JSON.stringify(results.probe)}; isolate=${JSON.stringify(results.isolate)}`;
-    results.skeptic = await phase("skeptic", {
-      description: `Skeptic ${s.id}`,
-      prompt: `你是专门的"推翻者"，任务不是验证而是推翻现有结论。${envBlock(workspace)}
+    results.skeptic = await run("skeptic", `Skeptic ${s.id}`, `你是专门的"推翻者"，任务不是验证而是推翻现有结论。${envBlock(workspace)}
 
 ${suspicionDesc}
 
@@ -234,8 +230,7 @@ ${skepticInput}
 3. 逐行核对"机制规避"结论: 若结论是被某机制规避，逐行读该机制代码确认它在所有路径上都成立。
 
 verdict: CONFIRMED（结论成立）/ REFUTED（结论被推翻，不回环，标人工复核）/ DOWNGRADED（改写为更弱表述）。${reportHint}`,
-      schema: skepticSchema,
-    });
+      schema: skepticSchema });
 
     return results;
   });
@@ -243,9 +238,7 @@ verdict: CONFIRMED（结论成立）/ REFUTED（结论被推翻，不回环，�
   // 唯一的 barrier: 全部疑点结束后汇总
   const all = await Promise.all(perSuspicion);
 
-  const synthesis = await phase("synthesize", {
-    description: "Synthesize all suspicions",
-    prompt: `你是汇总报告作者。以下是全部疑点的验证结果（JSON）:
+  const synthesis = await run("synthesize", "Synthesize all suspicions", `你是汇总报告作者。以下是全部疑点的验证结果（JSON）:
 
 ${JSON.stringify(all, null, 2)}
 
@@ -257,8 +250,9 @@ ${JSON.stringify(all, null, 2)}
 5. findings_draft: findings.md 条目草稿（带日期标题）。只出草稿文本，禁止修改任何共享文件。
 
 ${reportHint}`,
-    schema: synthSchema,
-  });
+    schema: synthSchema });
 
   return { synthesis, per_suspicion: all };
-};
+}
+
+await main(args);

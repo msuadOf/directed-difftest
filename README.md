@@ -18,13 +18,13 @@
 }
 ```
 
-2. 用 Claude Code Workflow 运行：
+2. 在 Claude Code 会话中运行（Workflow 无独立 CLI，由会话内的 Workflow 工具加载脚本并把疑点 JSON 内容作为 args 传入）：
 
 ```
-claude --workflow workflows/rtl-directed-difftest.js hypotheses/examples/vstart-vxsat-vlen.json
+用 workflow 跑 workflows/rtl-directed-difftest.js，args 用 hypotheses/examples/vstart-vxsat-vlen.json 的内容
 ```
 
-（若不使用 Workflow 运行器，也可按 `docs/workflow-detailed.md` 手动逐阶段执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。）
+（也可按 `docs/workflow-detailed.md` 手动逐阶段执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。）
 
 3. 中间产物在 `artifacts/<疑点id>/round<N>/`，最终汇总结论由 Synthesize 阶段输出（三分类 + 证据链 + findings.md 草稿）。
 
