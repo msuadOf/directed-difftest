@@ -12,7 +12,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # ---- 环境(默认指向本仓库 submodule, 首次使用先跑 ./scripts/setup-env.sh) ----
 EMU="${EMU:-$REPO_ROOT/xiangshan/build/emu}"
 REF="${REF:-$REPO_ROOT/xiangshan/ready-to-run/riscv64-nemu-interpreter-so}"
-CROSS="${CROSS:-riscv64-unknown-elf-gcc}"
+# 交叉编译器: 特性探测式选择(旧 gcc 10.2 不支持 RVV 助记符)
+source "$REPO_ROOT/scripts/toolchain.sh"
+CROSS="${CROSS:?未找到 RVV 编译器}"
+test -n "$EMU"
 LINKER="${LINKER:-$REPO_ROOT/templates/xiangshan.ld}"
 
 # 提交跟踪取证窗口(-b/-e 为周期范围, 按需调整; emu 无波形支持)

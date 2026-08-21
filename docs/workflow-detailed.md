@@ -32,7 +32,7 @@
 - XiangShan 以 submodule 形式放在本仓库 `xiangshan/`（pin 7bf51a8，kunminghu-v3）；首次使用跑 `./scripts/setup-env.sh`（拷入预编译 emu 与 REF，免 Verilator 重编；`--check` 只自检）
 - DUT emu：`xiangshan/build/emu`（MinimalConfig, VLEN=128, Verilator）
 - REF：`xiangshan/ready-to-run/riscv64-nemu-interpreter-so`
-- 交叉编译：`riscv64-unknown-elf-gcc -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld`（入口 `0x80000000`），结束放 GOODTRAP：`.word 0x0000006b`
+- 交叉编译：`source scripts/toolchain.sh` 特性探测选出版本（注意 `/usr/bin` 的 gcc 10.2.0 **不支持** RVV 助记符，本机可用的是 `~/riscv/.../bin` 的 15.1.0），`$CROSS -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld`（入口 `0x80000000`），结束放 GOODTRAP：`.word 0x0000006b`
 - emu 运行：`./xiangshan/build/emu -b <s> -e <e> -i <elf> --diff xiangshan/ready-to-run/riscv64-nemu-interpreter-so`；GOODTRAP 判定串为 `HIT GOOD TRAP`
 - emu 无波形支持（`--dump-wave` 会 SIGABRT）。取证用提交跟踪：emu 加 `-b/-e`（周期范围），提交跟踪日志含每退休指令的 pc/编码/dst/data。
 - GOODTRAP 到达 = 双方一致且自检通过；DiffTest ABORT = DUT 与 REF 分歧（本身即 bug 证据，看日志 `data` 字段的双值）。

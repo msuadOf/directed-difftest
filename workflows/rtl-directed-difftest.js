@@ -17,7 +17,7 @@ function envBlock() {
   return `## 环境（勿重建; 若 xiangshan/build/emu 缺失, 提示用户跑 ./scripts/setup-env.sh）
 - DUT emu: xiangshan/build/emu (MinimalConfig, VLEN=128, Verilator)
 - REF: xiangshan/ready-to-run/riscv64-nemu-interpreter-so
-- 交叉编译: riscv64-unknown-elf-gcc -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld (入口 0x80000000); 结束放 GOODTRAP: .word 0x0000006b
+- 交叉编译: 先 source scripts/toolchain.sh 得到 $CROSS(特性探测, /usr/bin 的 gcc 10.2 不支持 RVV 助记符), 再 $CROSS -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld (入口 0x80000000); 结束放 GOODTRAP: .word 0x0000006b
 - emu 无波形支持(--dump-wave 会 SIGABRT); 取证用提交跟踪: emu 加 -b <开始> -e <结束>, 日志含每退休指令的 pc/编码/dst/data
 - GOODTRAP 到达 = 双方一致且自检通过; ABORT = DUT 与 REF 分歧(本身即 bug 证据, 看日志 data 字段的双值)
 - XiangShan 源码在 submodule xiangshan/ (禁止修改其中任何文件)

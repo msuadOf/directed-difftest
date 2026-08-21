@@ -62,7 +62,7 @@ MODEL_ARGS=()
 [[ -n "$MODEL" ]] && MODEL_ARGS=(--model "$MODEL")
 
 run_claude() {  # $1=prompt
-  # 权限说明: 验证阶段要跑 bash(emu/gcc/riscv64-linux-gnu-gcc)。
+  # 权限说明: 验证阶段要跑 bash(emu/交叉编译器)。
   # acceptEdits 只放行文件编辑; 请在运行前于 settings.json 或启动交互中
   # 预放行所需命令, 否则 headless 会话会在权限点失败。
   local cmd=(claude -p "$1" "${MODEL_ARGS[@]}"

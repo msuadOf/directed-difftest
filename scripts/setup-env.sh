@@ -28,9 +28,8 @@ check() {
     || echo "WARN commit ${cur:-none} != $PINNED_COMMIT (历史结论基于 $PINNED_COMMIT 验证)"
   [[ -x "$XS/build/emu" ]] && echo "OK  DUT emu: xiangshan/build/emu" || { echo "MISS DUT emu (运行带拷贝的 setup 或自编)"; ok=0; }
   [[ -e "$XS/ready-to-run/riscv64-nemu-interpreter-so" ]] && echo "OK  REF nemu-so" || { echo "MISS REF nemu-so"; ok=0; }
-  command -v riscv64-unknown-elf-gcc >/dev/null && echo "OK  riscv64-unknown-elf-gcc" \
-    || { command -v riscv64-linux-gnu-gcc >/dev/null && echo "OK  riscv64-linux-gnu-gcc" \
-         || { echo "MISS riscv 交叉编译器 (riscv64-unknown-elf-gcc 或 riscv64-linux-gnu-gcc)"; ok=0; }; }
+  source "$REPO_ROOT/scripts/toolchain.sh"
+  [[ -n "$CROSS" ]] && echo "OK  RVV 编译器: $CROSS" || { echo "MISS 支持 RVV 助记符的编译器 (见 scripts/toolchain.sh)"; ok=0; }
   command -v python3 >/dev/null && echo "OK  python3" || { echo "MISS python3"; ok=0; }
   [[ $ok -eq 1 ]] && echo "== 环境就绪 ==" || { echo "== 环境不完整 =="; exit 1; }
 }
