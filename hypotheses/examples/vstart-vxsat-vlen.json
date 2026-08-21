@@ -15,7 +15,7 @@
     {
       "id": "S3",
       "file": "src/main/scala/xiangshan/backend/fu/vector/ByteMaskTailGen.scala",
-      "line": null,
+      "line": 16,
       "claim": "maxVLMAX 疑似硬编码，非默认 SEW/LMUL 组合下 vlmax 计算可能错误，尾部/活跃掩码生成越界或漏元素"
     }
   ],

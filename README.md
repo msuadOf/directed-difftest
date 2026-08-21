@@ -1,4 +1,4 @@
-# claudefuzz — RTL 疑点定向 DiffTest 验证工作流
+# directed-difftest — RTL 疑点定向 DiffTest 验证工作流
 
 本仓库把"RTL 疑点定向 DiffTest 验证工作流"固化为可复用的文档 + 脚手架：给定一批 RTL 疑点（文件:行号 + 预期错误行为），按 5 阶段流程（Hypothesize → Probe → Isolate → Skeptic → Synthesize）构造汇编自检用例，跑真实 emu vs NEMU DiffTest，迭代收敛根因，并以三分类结论沉淀。
 
@@ -25,7 +25,7 @@
 
 ### 方式二：Claude Code 会话内对话运行
 
-在 claudefuzz 目录（或 `--add-dir` 加入本仓库）启动 Claude Code，直接用自然语言驱动。Workflow 由会话内的 Workflow 工具加载脚本、疑点 JSON 内容作为 args 传入：
+在 directed-difftest 目录（或 `--add-dir` 加入本仓库）启动 Claude Code，直接用自然语言驱动。Workflow 由会话内的 Workflow 工具加载脚本、疑点 JSON 内容作为 args 传入：
 
 ```
 用 workflow 跑 workflows/rtl-directed-difftest.js，args 用 hypotheses/examples/vstart-vxsat-vlen.json 的内容，max_sweeps 设为 2

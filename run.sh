@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# claudefuzz 入口: 按关注方向扫描 RTL 疑点并跑定向 DiffTest 验证工作流
+# directed-difftest 入口: 按关注方向扫描 RTL 疑点并跑定向 DiffTest 验证工作流
 #
 # 用法:
 #   ./run.sh --focus "V 扩展 vstart/trap 恢复语义"                      # 扫描+验证
