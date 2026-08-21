@@ -1,0 +1,24 @@
+{
+  "suspicions": [
+    {
+      "id": "S1",
+      "file": "src/main/scala/xiangshan/backend/fu/vector/VIAluFix.scala",
+      "line": 105,
+      "claim": "vstart 相关逻辑疑似硬编码，可能忽略实际 vstart 寄存器值，导致 vstart>0 时源操作数取错元素（读到尾部/头部外的错误数据）"
+    },
+    {
+      "id": "S2",
+      "file": "src/main/scala/xiangshan/backend/fu/NewCSR/Unprivileged.scala",
+      "line": 106,
+      "claim": "vxsat 同拍置位/清零顺序疑似有问题：同一条指令既触发饱和置位又有清零语义时，最终 vxsat 值可能错误（或按错误顺序提交）"
+    },
+    {
+      "id": "S3",
+      "file": "src/main/scala/xiangshan/backend/fu/vector/ByteMaskTailGen.scala",
+      "line": null,
+      "claim": "maxVLMAX 疑似硬编码，非默认 SEW/LMUL 组合下 vlmax 计算可能错误，尾部/活跃掩码生成越界或漏元素"
+    }
+  ],
+  "max_rounds": 5,
+  "workspace": "/home/baiyifan/workplace-local/isla-runner"
+}
