@@ -183,9 +183,9 @@ ${suspicionDesc}
       let repros = 0;
       let attempts = 0;
       let idleRounds = 0;
-      const maxIdle = 1; // 连续一轮无新信息即停
+      const maxIdle = 1; // 连续 maxIdle 轮无新信息即停(与文档一致: 一轮即停)
 
-      while (variant < max_variants && idleRounds <= maxIdle) {
+      while (variant <= max_variants && idleRounds < maxIdle) {
         const r = await run("isolate", `Isolate ${s.id} variant ${variant + 1}`, `你是验证工程师。${envBlock(workspace)}
 
 ${suspicionDesc}
