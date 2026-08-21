@@ -57,8 +57,15 @@
 | 被机制天然规避 | 写明是哪条机制代码拦截的（须逐行核对过） |
 | 当前配置不可达 | 写明何时会暴露（如换 VLEN/配置参数后） |
 
+## 动机实例（2026-08-21 三个疑点，恰好各落一类）
+
+- **S1 → 真实 bug，但藏在掩盖路径里**：`VIAluFix.scala:105` vstart 硬编码 0.U 被判 illegal 的前置检查（`VecExceptionGen.scala:280`）完全掩盖；但在 illegal trap 返回后读回 `vmv.x.s a0, v3`，DUT 得 `0xffffffff00000055`、NEMU 得 `0x55`——tail-agnostic 污染经 trap flush 扩散到读旁路，ABORT 可复现（详见 detailed 文档）。
+- **S2 → 机制天然规避**：`Unprivileged.scala:106` vxsat 的"软件写后又被 robCommit OR"看似顺序 bug，但 CSR 指令是 `noSpec+blockBack`，csrw 落盘比 OR 晚一拍以上；36 用例全过，对照实验证明用例有灵敏度。
+- **S3 → 当前配置不可达**：`ByteMaskTailGen.scala` maxVLMAX 硬编码 128 在 VLEN=128 恰好占满不溢出（极限用例 SEW=8/m8/vl=128 全过）；VLEN=256 会 elaboration 编译失败而非静默出错。
+
 ## 关键教训
 
-1. **测试通过 ≠ 无 bug**：疑点被证伪时，必须追问 trap 返回、flushPipe、vsetvli 重配置之后架构状态是否一致——真 bug 常藏在掩盖原疑点的路径里。
+1. **测试通过 ≠ 无 bug**：疑点被证伪时，必须追问 trap 返回、flushPipe、vsetvli 重配置之后架构状态是否一致——真 bug 常藏在掩盖原疑点的路径里（S1 即如此：原命题被掩盖，掩盖路径才是真 bug）。
 2. **灵敏度对照**：自检用例可能恒真。必须先跑一个"已知应有差异"的对照（如不执行清零指令确认状态真被改变），否则结论无效。
 3. **循环终止由代码控制**：Isolate 迭代不让 agent 自己决定"差不多了"——由 JS 循环按"轮数上限 + 连续一轮无新信息"客观终止。
+4. **决定性实验定根因**：读一个从未被写过的相邻寄存器仍出错（S1 的 t16），即可区分"写错目标"与"旁路/检查点污染"。

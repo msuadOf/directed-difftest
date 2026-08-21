@@ -2,6 +2,28 @@
 
 本文档是工作流的权威设计。Workflow 实现（`workflows/rtl-directed-difftest.js`）必须与本文一致；未来 agent 干活前必读本文。
 
+## 动机：2026-08-21 三个疑点的实测案例
+
+本工作流直接来源于对 XiangShan（kunminghu-v3, commit 7bf51a8, MinimalConfig VLEN=128）三个 RTL 疑点的实测验证，三个疑点恰好覆盖三分类结论，其中 S1 演示了"原命题被掩盖但掩盖路径藏真 bug"的关键场景：
+
+**S1（真实 bug，藏在掩盖路径里）**：疑点 `VIAluFix.scala:105` 把传给 MGU 的 vstart 硬编码为 `0.U`，预期恢复执行时重算 vstart 之前的元素。
+- Hypothesize 发现掩盖机制：`VecExceptionGen.scala:280` 把 isVArith && vstart≠0 一律判 illegal instruction，指令不会带非零 vstart 进入 VIAluFix——原命题"被完全掩盖"。
+- Probe 首测（`csrw vstart, 2` + vadd → mcause=2 → mret）GOODTRAP 无 diff，但**一致性追问**（本工作流 Phase 2 的第 2 步由此而来）在 trap 返回后执行 `vmv.x.s a0, v3` 抓到真 bug：DUT 提交 `0xffffffff00000055`，NEMU 为 `0x55`，高 32 位是 tail-agnostic 式全 1 污染，DiffTest 直接 ABORT。
+- Isolate 决定性实验（t16）：trap 由 v4 上的指令触发、读**从未被写过**的 v3 仍失败 → 污染不是写错目标寄存器，而是经 trap flush/恢复路径扩散到向量读旁路/检查点（归因 bypass-checkpoint-pollution）；最小用例时通时不通（0<repro_rate<1，竞态特征）。
+- 副产物：sew=64 + vsadd.vi + vstart=1 使 emu glibc 崩溃（疑 difftest 事件缓存溢出）。
+
+**S2（机制天然规避）**：疑点 `NewCSR/Unprivileged.scala:106` 先处理 CSR 软件写 vxsat、再用 `robCommit.vxsat` OR 覆盖（Rob.scala:765 同组 OR），预期 `csrw vxsat, x0` 与饱和向量指令同组退休时清零失效。
+- Hypothesize 找到规避机制：CSR 指令解码为 `noSpec+blockBack`（DecodeUnit.scala:210-216），csrw 只在成为 ROB 队头后发射，软件写落盘比 robCommit OR 至少晚一拍，时间上不重叠。
+- Probe 36 个用例（0-8 nop 间距、正反序、压力循环，经 vcsr 0x00f 别名路径等价覆盖——直接访问 0x009 在 emu/NEMU 均抛 illegal）全部 GOODTRAP；灵敏度对照（不执行清零指令确认 vsadd 确实置位 vxsat）证明用例有效。
+- 教训：`Unprivileged.scala:106` 的"旧值 OR"写法仍然脆弱，属"当前正确但依赖另一处机制"，Skeptic 对这类结论要逐行核对机制代码在所有路径成立。
+
+**S3（当前配置不可达）**：疑点 `ByteMaskTailGen.scala` 把 maxVLMAX 硬编码为 8*16=128（带 TODO: parameterize）。
+- Hypothesize 静态推导：VLEN=128 时元素数上限 = 128*8/8 = 128 恰好等于位图宽度，最坏组合 SEW=8/m8/vl=128 精确占满不溢出。
+- Probe 极限用例（SEW=8/m8/vl=128 带 0x0F0F 掩码的 vadd、vl=100 的 ta/tu/mu 尾部、vstart=7）全过。
+- VLEN=256 时 `Mgu/NewMgu` 实例化 `prestartEn((i+1)*32-1, i*32)` 在 i≥4 越界切片，Chisel elaboration 直接编译失败（非静默错误）；参数化方案 `8*(vlen/8)`。
+
+另有两个测试副产品疑点（待后续跑本工作流验证）：`csrw vstart` 位于 vsetvli 之前疑被 flushPipe 吞掉；`vsetvli zero, zero, ...`（AVL=vl 形式）触发 vtype 比对 abort。
+
 ## 0. 输入格式
 
 ```json
