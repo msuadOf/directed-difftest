@@ -4,6 +4,7 @@
 # 用法:
 #   ./run.sh --focus "V 扩展 vstart/trap 恢复语义"                      # 扫描+验证
 #   ./run.sh --focus "V 扩展" --model claude-opus-4-7[1m]              # 指定模型
+#   ./run.sh --focus "V 扩展" --max-cycles 3                          # 外层大迭代 3 轮
 #   ./run.sh --suspicions hypotheses/examples/vstart-vxsat-vlen.json   # 跳过扫描, 直接验证
 #   ./run.sh --focus "CSR 同拍写顺序" --scan-only                      # 只产出疑点清单
 #
@@ -11,7 +12,9 @@
 #   --focus <text>        关注方向(自然语言), 用于 scan 阶段; 与 --suspicions 二选一
 #   --suspicions <file>   已有疑点 JSON(格式见 hypotheses/examples/), 跳过扫描
 #   --model <id>          Claude 模型 id, 默认继承当前 claude 配置
-#   --max-rounds <n>      Isolate 阶段每疑点轮数上限, 默认 4
+#   --max-rounds <n>      内层迭代: Isolate 阶段每疑点变量控制轮数上限, 默认 4
+#   --max-cycles <n>      外层大迭代: 验证轮数上限(每轮汇总产出的新疑点作为
+#                         下轮输入, 直到无新疑点或达上限), 默认 1(不滚动)
 #   --workspace <dir>     isla-runner 工作区根, 默认 /home/baiyifan/workplace-local/isla-runner
 #   --scan-only           只扫描产出疑点清单, 不跑验证
 #   --dry-run             只打印将执行的 claude 命令, 不运行
@@ -24,6 +27,7 @@ FOCUS=""
 SUSPICIONS=""
 MODEL=""
 MAX_ROUNDS=4
+MAX_CYCLES=1
 WORKSPACE="/home/baiyifan/workplace-local/isla-runner"
 SCAN_ONLY=0
 DRY_RUN=0
@@ -34,6 +38,7 @@ while [[ $# -gt 0 ]]; do
     --suspicions)   SUSPICIONS="$2"; shift 2 ;;
     --model)        MODEL="$2"; shift 2 ;;
     --max-rounds)   MAX_ROUNDS="$2"; shift 2 ;;
+    --max-cycles)   MAX_CYCLES="$2"; shift 2 ;;
     --workspace)    WORKSPACE="$2"; shift 2 ;;
     --scan-only)    SCAN_ONLY=1; shift ;;
     --dry-run)      DRY_RUN=1; shift ;;
@@ -95,6 +100,7 @@ ARGS_JSON="$(python3 -c "
 import json,sys
 d=json.load(open('$SUSPICIONS'))
 d.setdefault('max_rounds', $MAX_ROUNDS)
+d.setdefault('max_cycles', $MAX_CYCLES)
 d.setdefault('workspace', '$WORKSPACE')
 print(json.dumps(d))")"
 

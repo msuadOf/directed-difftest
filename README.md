@@ -6,39 +6,58 @@
 
 ## 怎么用
 
-1. 准备疑点清单 JSON，放到 `hypotheses/` 下，格式见 `hypotheses/examples/vstart-vxsat-vlen.json`：
+### 方式一：CLI 一键入口（headless）
+
+`run.sh` 封装 `claude -p` 无头调用，两个阶段：按方向扫 RTL 产出疑点清单 → 跑验证工作流。
+
+```
+./run.sh --focus "V 扩展 vstart/trap 恢复语义"                        # 扫描+验证
+./run.sh --focus "V 扩展" --model claude-opus-4-7[1m]                 # 指定模型
+./run.sh --focus "V 扩展" --max-cycles 3                              # 外层大迭代 3 轮
+./run.sh --suspicions hypotheses/examples/vstart-vxsat-vlen.json      # 跳过扫描直接验证
+./run.sh --focus "CSR 同拍写顺序" --scan-only                         # 只产出疑点清单
+./run.sh ... --dry-run                                                # 只看将执行的命令
+```
+
+全部参数见 `./run.sh --help`（--focus/--suspicions/--model/--max-rounds/--max-cycles/--workspace/--scan-only/--dry-run）。
+
+注意：headless 验证阶段需要执行 bash（emu/gcc），请先在 settings.json 预放行相关命令，否则会在权限点失败。
+
+### 方式二：Claude Code 会话内对话运行
+
+在 claudefuzz 目录（或 `--add-dir` 加入本仓库）启动 Claude Code，直接用自然语言驱动。Workflow 由会话内的 Workflow 工具加载脚本、疑点 JSON 内容作为 args 传入：
+
+```
+用 workflow 跑 workflows/rtl-directed-difftest.js，args 用 hypotheses/examples/vstart-vxsat-vlen.json 的内容，max_cycles 设为 2
+```
+
+也可以不跑完整 workflow，按 `docs/workflow-detailed.md` 手动逐阶段对话执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。对话方式的好处是可以中途介入（改用例、看证据、跳过某疑点）。
+
+### 疑点清单格式
 
 ```json
 {
   "suspicions": [
     {"id": "S1", "file": "...", "line": 123, "claim": "预期错误行为描述"}
   ],
-  "max_rounds": 5,
+  "max_rounds": 4,
+  "max_cycles": 1,
   "workspace": "/home/baiyifan/workplace-local/isla-runner"
 }
 ```
 
-2. 或者用一键入口 `run.sh`（headless，两阶段：扫描方向→疑点清单→验证工作流）：
+### 两层迭代参数
 
-```
-./run.sh --focus "V 扩展 vstart/trap 恢复语义"                       # 扫描+验证
-./run.sh --focus "V 扩展" --model claude-opus-4-7[1m] --max-rounds 4  # 指定模型/轮数
-./run.sh --suspicions hypotheses/examples/vstart-vxsat-vlen.json     # 跳过扫描直接验证
-./run.sh --focus "CSR 同拍写顺序" --scan-only                        # 只产出疑点清单
-./run.sh ... --dry-run                                               # 只看将执行的命令
-```
+工作流里有两个独立的迭代次数参数（另有第三层不受参数控制，见下）：
 
-注意：headless 验证阶段需要执行 bash（emu/gcc），请先在 settings.json 预放行相关命令，否则会在权限点失败。
+| 参数 | 层级 | 含义 | 默认 |
+|---|---|---|---|
+| `max_rounds` / `--max-rounds` | **内层**（单疑点收敛迭代） | Isolate 阶段每疑点"只改一个变量重跑"的轮数上限；另有"连续一轮无新信息"提前终止 | 4 |
+| `max_cycles` / `--max-cycles` | **外层**（疑点清单滚动大迭代） | 每轮 Synthesize 产出的新疑点（副产品分歧、覆盖缺口）作为下一轮输入，直到无新疑点或达上限 | 1（不滚动） |
 
-3. 也可在 Claude Code 会话中手动运行（Workflow 由会话内的 Workflow 工具加载脚本并把疑点 JSON 内容作为 args 传入）：
+第三层是 Probe agent 内部的自迭代（构造→跑→再构造在单次 agent 调用内自发进行），刻意**不设参数**——它是探索性的，上限会掐死"一致性追问"这类发现（真 bug 正是从这层冒出来的）。
 
-```
-用 workflow 跑 workflows/rtl-directed-difftest.js，args 用 hypotheses/examples/vstart-vxsat-vlen.json 的内容
-```
-
-（还可按 `docs/workflow-detailed.md` 手动逐阶段执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。）
-
-3. 中间产物在 `artifacts/<疑点id>/round<N>/`，最终汇总结论由 Synthesize 阶段输出（三分类 + 证据链 + findings.md 草稿）。
+中间产物在 `artifacts/<疑点id>/round<N>/`，最终汇总结论由 Synthesize 阶段输出（三分类 + 证据链 + findings.md 草稿 + 供大迭代用的 follow_ups）。
 
 ## 目录导航
 

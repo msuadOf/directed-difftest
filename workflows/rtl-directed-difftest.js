@@ -101,6 +101,11 @@ const synthSchema = {
     repro_elufs: { type: "array", items: { type: "string" } },
     coverage_gaps: { type: "string" },
     findings_draft: { type: "string" },
+    follow_ups: {
+      type: "array",
+      description: "本轮发现的新疑点(副产品/覆盖缺口), 供外层大迭代作为下轮输入",
+      items: { type: "object", properties: { id: {type:"string"}, file: {type:"string"}, line: {}, claim: {type:"string"} }, required: ["id","file","claim"] },
+    },
   },
   required: [
     "summary_table",
@@ -117,10 +122,8 @@ const run = (ph, label, prompt, schema) =>
   agent(prompt, { label, phase: ph, schema });
 
 // Workflow 引擎自动提供全局 args; 由调用方把疑点 JSON 内容直接作为 args 传入
-async function main(args) {
-  const { suspicions, max_rounds = 5 } = args;
-  const workspace = inp.workspace || "/home/baiyifan/workplace-local/isla-runner";
-
+// verifyOneBatch: 跑一批疑点, 返回 { synthesis, per_suspicion }
+async function verifyOneBatch(suspicions, max_rounds, workspace) {
   // 每疑点一条独立流水线，互不等待
   const perSuspicion = suspicions.map(async (s) => {
     const suspicionDesc = `疑点 ${s.id}: ${s.file}:${s.line}
@@ -248,11 +251,31 @@ ${JSON.stringify(all, null, 2)}
 3. repro_elufs: 最小复现 ELF 名单（artifacts 下的路径）。
 4. coverage_gaps: 覆盖面声明，明确列出没测到的路径（其他 VLEN、其他 sew/lmul、多 harts 等）。
 5. findings_draft: findings.md 条目草稿（带日期标题）。只出草稿文本，禁止修改任何共享文件。
+6. follow_ups: 本轮验证过程中发现的新疑点(副产品分歧、覆盖缺口中值得定向验证的点)，每条含 id/file/line/claim；没有则给空数组。
 
 ${reportHint}`,
     schema: synthSchema });
 
   return { synthesis, per_suspicion: all };
+}
+
+// ---- 外层大迭代(loop-until-dry) ----
+// 每轮 Synthesize 的 follow_ups 作为下一轮疑点输入;
+// 终止: 轮数达 max_cycles 或 follow_ups 为空
+async function main(args) {
+  const maxCycles = args.max_cycles || 1;
+  const batchResults = [];
+  let queue = args.suspicions;
+  for (let cycle = 1; cycle <= maxCycles && queue.length > 0; cycle++) {
+    log(`cycle ${cycle}/${maxCycles}: ${queue.length} 个疑点`);
+    const r = await verifyOneBatch(queue, args.max_rounds || 5, args.workspace);
+    r.cycle = cycle;
+    batchResults.push(r);
+    queue = (r.synthesis && r.synthesis.follow_ups) || [];
+  }
+  if (queue.length > 0)
+    log(`已达 max_cycles=${maxCycles}, 剩余未验证疑点 ${queue.length} 条(见最后一轮 follow_ups)`);
+  return { batches: batchResults, unfinished: queue };
 }
 
 await main(args);
