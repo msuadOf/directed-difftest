@@ -22,6 +22,7 @@
 
 - 原 bug（VIAluFix 重算元素 0）在架构层面不可达；真 bug 在掩盖它的异常路径里（trap 后向量状态污染）。
 - 副产物：sew=64 + vsadd.vi + vstart=1 使 emu glibc 崩溃（疑 difftest 事件缓存溢出）；emu 编译未含波形支持，取证只能靠提交跟踪。
+- **根因修正（2026-08-21 后续隔离对照）**：独立复现包（`examples/vstart-trap-vmv-repro/`，`make controls`）证明 **ta,ma 策略才是必要条件**——`e32,m1,ta,ma` 下即使 vstart=0 且无任何前置向量 ALU 指令，`vmv.x.s` 读回同样错值；同路径换 `tu,mu` 则 GOODTRAP。即非零 vstart 和 trap 都不是必要条件，本例展示的是 MinimalConfig emu 的 ta,ma tail 填充与 NEMU 分歧。
 
 ## S2（机制天然规避）
 
