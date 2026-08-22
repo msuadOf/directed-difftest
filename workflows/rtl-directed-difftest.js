@@ -144,7 +144,7 @@ ${suspicionDesc}
 5. sensitivity: 用什么初值/参数能区分"旧值保留"与"算错的新值"（如 0x5A vs 0x70）
 
 ${reportHint}`,
-      schema: hypothesizeSchema });
+      hypothesizeSchema);
 
     let results = {
       id: s.id,
@@ -175,7 +175,7 @@ ${suspicionDesc}
 3. 决定性实验: 读一个从未被写过的相邻向量寄存器，判断污染是否经旁路/检查点扩散。
 
 取证据: emu 加 -b <开始> -e <结束> 提交跟踪。所有源码/ELF/日志存到 artifacts/${s.id}/variant1/。${reportHint}`,
-        schema: probeSchema });
+        probeSchema);
       results.probe = probe;
 
       // Phase 3: Isolate — 变体轮(variant)循环, 每轮只改一个变量; 终止由代码判
@@ -197,7 +197,7 @@ ${suspicionDesc}
 - 时通时不通则多跑几次记录复现率 repro_rate = 复现次数/尝试次数 (0<r<1 判竞态特征)。
 - new_information: 本轮结论是否提供了上一轮没有的新信息。
 产物存到 artifacts/${s.id}/variant${variant + 1}/。${reportHint}`,
-          schema: isolateSchema });
+          isolateSchema);
         variant += 1;
         attributions.push(r.attribution);
         if (r.attribution !== "not-reproducible") {
@@ -235,7 +235,7 @@ ${skepticInput}
 3. 逐行核对"机制规避"结论: 若结论是被某机制规避，逐行读该机制代码确认它在所有路径上都成立。
 
 verdict: CONFIRMED（结论成立）/ REFUTED（结论被推翻，不回环，标人工复核）/ DOWNGRADED（改写为更弱表述）。${reportHint}`,
-      schema: skepticSchema });
+      skepticSchema);
 
     return results;
   });
@@ -256,7 +256,7 @@ ${JSON.stringify(all, null, 2)}
 6. follow_ups: 本轮验证过程中发现的新疑点(副产品分歧、覆盖缺口中值得定向验证的点)，每条含 id/file/line/claim；没有则给空数组。
 
 ${reportHint}`,
-    schema: synthSchema });
+    synthSchema);
 
   return { synthesis, per_suspicion: all };
 }
@@ -264,7 +264,9 @@ ${reportHint}`,
 // ---- 外层大迭代(loop-until-dry) ----
 // 每轮 Synthesize 的 follow_ups 作为下一轮疑点输入;
 // 终止: 轮数达 max_sweeps 或 follow_ups 为空
-async function main(args) {
+async function main(rawArgs) {
+  // args 可能以 JSON 字符串形式传入
+  const args = typeof rawArgs === "string" ? JSON.parse(rawArgs) : rawArgs;
   const maxSweeps = args.max_sweeps || 4;
   const batchResults = [];
   let queue = args.suspicions;

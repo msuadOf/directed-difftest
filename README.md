@@ -66,6 +66,7 @@
 - `docs/motivation.md` — 动机实例：三个实测疑点，含 S1 真 bug 的完整发现过程
 - `workflows/rtl-directed-difftest.js` — 可执行的 Workflow 脚本
 - `hypotheses/` — 疑点清单输入（含示例）
+- `examples/vstart-trap-vmv-repro/` — S1 真 bug（trap 后 vmv.x.s 读回 tail-agnostic 污染）的完整自包含复现包：`make run` 四组全 REPRODUCED，`make controls` 隔离对照（结论：ta,ma 策略是必要条件，非零 vstart/trap 不是）
 - `templates/` — 汇编自检用例模板 + 单用例编译/运行脚本骨架
 - `artifacts/` — 每疑点每轮的中间产物（用例源码、ELF、日志）
 - `AGENTS.md` — 给未来 agent 的规则，干活前必读
