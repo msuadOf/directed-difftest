@@ -1,0 +1,9 @@
+# artifacts/ 是仿真中间产物(ELF/VCD/日志), 由固定 pin 的 xiangshan commit + toolchain
+# 随时可重新生成, 体积大(单次 sweep 常见几百 MB~GB), 不适合进 git 历史。
+# 只保留目录骨架(.gitkeep), 真正需要沉淀的结论走 hypotheses/known-issues.json 或 findings.md。
+artifacts/*
+!artifacts/.gitkeep
+
+# 误编译残留的默认输出文件名
+a.out
+/*.log

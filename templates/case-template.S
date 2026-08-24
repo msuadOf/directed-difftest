@@ -5,6 +5,23 @@
     .section .text
     .globl _start
 _start:
+    # ---- setup: trap 基础设施(涉及 trap 的用例必填) ----
+    # 【硬性要求】TRAPH 标签前必须显式 .balign 4:
+    # mtvec.base 会把低 2 位掩掉, 若 TRAPH 落在非 4 字节对齐地址,
+    # trap 会跳到 base&~3 的掩码地址(通常是上一条指令中间), 表现为
+    # 挂死/乱码伪 GOODTRAP/timeout, 极易误判成"emu 不支持该指令"。
+    la      t0, TRAPH
+    csrw    mtvec, t0               # 未设 mtvec 时 double-trap 会打印伪 "HIT GOOD TRAP"
+    csrr    t0, mstatus
+    ori     t0, t0, 0x600           # 使能 mstatus.VS(bits 10:11); 写错位会挂死
+    csrw    mstatus, t0
+
+    .balign 4
+TRAPH:
+    # trap handler: 读 mcause 判定后可改 mepc + mret 跳到 CHECK
+    # (具体逻辑按用例填写)
+    j       FAIL                    # 占位, 按用例替换
+
     # ---- setup: 配置向量上下文 + 可辨识初值 ----
     # 初值必须"可辨识": 旧值与算错的新值能区分(如 0x5A vs 0x70),
     # 以掩盖"保留旧值"类 bug。按疑点调整 sew/lmul/vl。
@@ -32,8 +49,12 @@ _start:
     j       GOODTRAP
 
 FAIL:
-    # 失败路径: 也可在此打印/写内存取证, 但必须停在非 GOODTRAP 地址
-    j       .
+    # 失败路径: 停在非 GOODTRAP 地址。
+    # 【注意】j .(自旋)+外层 timeout 会以 SIGTERM 杀 emu, 日志显示
+    # "timeout: 核心转储", 且无法区分"FAIL 命中"与"挂死/从未到 CHECK"。
+    # 更可辨识的写法: 故意执行 illegal 指令(如 .word 0) 或跳到一个
+    # 从未定义的地址; 复核时应结合提交跟踪确认 CHECK 确实执行过。
+    j       .                       # 外层建议用 timeout -s INT, emu 会打 PERF/周期数
 
     .align 2
 GOODTRAP:

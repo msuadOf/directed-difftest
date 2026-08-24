@@ -6,13 +6,14 @@
 # 用法: source scripts/toolchain.sh   (之后 $CROSS 可用; 无可用编译器时 CROSS 为空)
 
 __probe_rvv() {  # $1=gcc 路径; 支持则返回 0
-  "$1" -nostdlib -nostartfiles -march=rv64gcv -mabi=lp64d \
-    -x assembler -o /dev/null - <<< 'vsetvli t2, zero, e8, m1, ta, ma' >/dev/null 2>&1
+  "$1" -nostdlib -nostartfiles -march=rv64gcv_zicsr -mabi=lp64d \
+    -x assembler -o /dev/null - <<< $'vsetvli t2, zero, e8, m1, ta, ma\ncsrw vstart, zero' >/dev/null 2>&1
 }
 
 __cross_candidates=(
   "${CROSS:-}"
-  "$HOME/riscv/riscv64-unknown-elf/bin/riscv64-unknown-elf-gcc"
+  "${HOME:-/root}/riscv/riscv64-unknown-elf/bin/riscv64-unknown-elf-gcc"
+  "/opt/riscv/bin/riscv64-unknown-elf-gcc"
   "$(command -v riscv64-unknown-elf-gcc 2>/dev/null || true)"
   "$(command -v riscv64-linux-gnu-gcc 2>/dev/null || true)"
 )
@@ -30,4 +31,4 @@ else
   echo "[toolchain] 未找到支持 RVV 助记符的 riscv 交叉编译器。" >&2
   echo "            装新版 XiangShan 工具链(gcc>=12), 或设 CROSS= 指向; 旧 gcc 只能用 .4byte 手工编码。" >&2
 fi
-unset -f __probe_rvv __cross_candidates 2>/dev/null || true
+unset -f __probe_rvv; unset __cross_candidates

@@ -2,9 +2,9 @@
   "suspicions": [
     {
       "id": "S1",
-      "file": "src/main/scala/xiangshan/backend/fu/vector/VIAluFix.scala",
+      "file": "src/main/scala/xiangshan/backend/fu/wrapper/VIAluFix.scala",
       "line": 105,
-      "claim": "vstart 相关逻辑疑似硬编码，可能忽略实际 vstart 寄存器值，导致 vstart>0 时源操作数取错元素（读到尾部/头部外的错误数据）"
+      "claim": "vstart 相关逻辑疑似硬编码，可能忽略实际 vstart 寄存器值，导致 vstart>0 时源操作数取错元素（读到尾部/头部外的错误数据）。注（2026-08-23）：fu/vector/VIAluFix.scala 全文件被注释（死代码，非编译单元）；真正参与编译的实现在 fu/wrapper/VIAluFix.scala，同一行号 105 恰好对应 `mgu.io.in.info.vstart := 0.U`。已验证该 claim 架构上不可达（VecExceptionGen.scala:280 译码期拦截 + VIAluFix.sv 执行级 exceptionVec_2 冗余拦截 + NewMgu 端口在网表中被 firtool 常量折叠剔除），三重独立机制锁死。"
     },
     {
       "id": "S2",

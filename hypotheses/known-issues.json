@@ -1,0 +1,71 @@
+[
+  {
+    "id": "XS-vsetvli-keepvl-stale-specvtype",
+    "symptom": "vsetvli/vsetivli 的 keep-vl 形式(rs1=x0&rd=x0)在新旧 vtype 的 vlmul/vsew 比值改变时, 应按 RVV 规范置 vill 使 vl=0, 实际却漏置 vill 且 vl 保留旧值。可观测判据: difftest 在 csrr vl/vtype 或后续向量指令处 ABORT, 日志报 vtype different, right(REF)=0x8000000000000000(vill=1), wrong(DUT)=旧 vtype(如 0xd8)",
+    "keywords": ["vsetvli", "vsetivli", "keep vl", "keep-vl", "rs1=x0", "rd=x0", "specVType", "oldVt", "keepVlIllegal", "vill", "vl 保留", "VTypeBuffer", "VSetRvfWvf"],
+    "hint_file": "src/main/scala/xiangshan/backend/fu/wrapper/VSet.scala",
+    "internals": "仅供参考、不作为匹配依据: 根因链为 VTypeBuffer.scala:248 entry.vtype := inst.vpu.vtype 用推测 vtype 而非 FU 写回值更新 vtype 缓冲 -> VSet.scala:104 VSetRvfWvf 用 in.ctrl.vpu.get.specVType 作为 oldVt -> Vsetu.scala:98-100 keepVlIllegal 判定拿旧 vlmul/vsew 与新值比比值, 比值实际已变却判为不变, 漏置 vill。触发条件: keep-vl 的 vsetvli/vsetivli 紧跟一条改变 vlmul/vsew 比值的 vsetivli/vsetvli。vsetvl(寄存器形式)不受影响(variant4 双跑均 GOODTRAP); 比值不变的 keep-vl(A/E 对照组)不触发。修复建议二选一: VTypeBuffer 写回改用 FU 输出值, 或 VsetModule 传入真实 oldVt。",
+    "local_finding_id": "F2",
+    "note": "本仓库 2026-08-24 独立复现并矩阵化定位(variant1-4: 正交 cell B/C/D 比值缩小/放大/同 SEW 换 LMUL 全部 ABORT, 比值不变与对照组全部 GOODTRAP, 含提交跟踪与 VCD 波形证据)。Seed 固定下确定性复现(repro_rate 1.0), 非竞态。尚未检索上游是否已有同题 issue, 提交前应先查重。上游 issue 草稿见 artifacts/vsetvli-keepvl-specvtype/variant5/issue-draft.md。",
+    "added_date": "2026-08-24"
+  },
+  {
+    "id": "XS-vmvxs-tail-pollution",
+    "symptom": "vmv.x.s 把向量寄存器 element 0 搬进整数寄存器时, 若 SEW < XLEN, 目的整数寄存器的高位没有按 RVV 规范做符号扩展, 而是被填成 0xFF。ta(tail-agnostic)策略下复现, tu 策略下被掩盖。可观测判据: difftest ABORT, DUT 侧 rd 形如 0xffffffff_xxxxxxxx, REF 侧为符号扩展后的正确值",
+    "keywords": ["vmv.x.s", "vfmv.f.s", "符号扩展", "sign-extend", "高位", "0xff", "0xFF", "tail", "vta", "element 0", "标量搬移"],
+    "hint_file": "src/main/scala/xiangshan/backend/fu/wrapper/VMove.scala",
+    "internals": "仅供参考、不作为匹配依据: 根因链为 VMove 强制 newVl=1 且无差别透传 vta -> ByteMaskTailGen 把 element0 之外全判为 tail -> Mgu 在 ta 模式下填充 0xFF -> 128->64 位截断把污染字节带入 GPR。",
+    "upstream_issue": {
+      "repo": "OpenXiangShan/XiangShan",
+      "number": 5829,
+      "url": "https://github.com/OpenXiangShan/XiangShan/issues/5829",
+      "state": "open",
+      "labels": ["type: bug/confirmed"]
+    },
+    "duplicates": [
+      {
+        "number": 5927,
+        "url": "https://github.com/OpenXiangShan/XiangShan/issues/5927",
+        "state": "closed",
+        "note": "维护者评论 \"This issue seems similar to #5829, so I will close it\" 合并; 其复现现象(0xffffffff00000001 高位污染)与本仓库 F1 几乎一致"
+      }
+    ],
+    "local_finding_id": "F1",
+    "note": "本仓库 2026-08-24 sweep 独立复现并定位, 含波形级信号证据与 SEW/ta-tu 对照矩阵, 比现有 issue 更完整。上游已确认为 bug, 无需在本仓库重复验证; 后续 sweep 命中同一现象的新 claim 应直接跳过。未覆盖的子角度(值得继续深挖, 不应被本条跳过): F1-sub-wrong-target-addr —— 污染值疑似不是纯 0xFF 填充, 而是\"用整数目的寄存器编号误当向量寄存器地址读到的内容\", 这个角度上游 issue 讨论中没有出现。",
+    "added_date": "2026-08-24"
+  },
+  {
+    "id": "XS-vstart-vecarith-unobservable",
+    "symptom": "怀疑非零 vstart 下(异常返回后从中间元素恢复执行)向量整数算术指令的结果元素取错位置/取错值。实测结论: 该现象在本核上不可观测 —— vstart != 0 时这类指令一律先触发 illegal instruction 异常, 根本执行不到出错逻辑, 因此 difftest 永远抓不到分歧, 属于\"当前架构下不可达\"而非 bug",
+    "keywords": ["vstart", "非零 vstart", "vstart>0", "向量算术", "vadd.vv", "vsadd", "取错元素", "恢复执行", "illegal instruction"],
+    "hint_file": "src/main/scala/xiangshan/backend/fu/wrapper/VIAluFix.scala",
+    "internals": "仅供参考、不作为匹配依据: 原始 claim 指 VIAluFix.scala:105 把送入 mgu 的 vstart 硬编码为 0.U。三重独立机制锁死该路径: (1) VecExceptionGen.scala:280 译码期对所有向量算术指令做 vstart!=0 的无差别 illegal-instruction 拦截, 覆盖单uop/多uop(LMUL>1)/simple-complex 全部译码分流路径; (2) VIAluFix.sv 执行级自带冗余拦截 exceptionVec_2=|vstart; (3) 网表级: NewMgu.sv 综合后 vstart 输入端口被 firtool 常量折叠直接剔除, 波形 scope 里连 mgu 实例都找不到。",
+    "local_finding_id": "S1",
+    "note": "纯本地结论, 无对应上游 issue(不是 bug, 没有可报的东西)。2026-08-24 sweep 内三轮独立验证(isolate + skeptic 两次)确认, skeptic 阶段还做了负对照(故意断言旧值不变, 程序死循环超时)证伪\"检查机制恒真\"的怀疑。代码本身是风格/一致性缺陷, 但不构成可被 difftest 捕获的功能性 bug, 判定 not-reproducible/CONFIRMED。后续 sweep 命中同一现象(不限于哪条具体指令 —— vstart!=0 的拦截是对整个向量算术类别的无差别判据)应直接跳过。",
+    "added_date": "2026-08-24"
+  },
+  {
+    "id": "XS-vmove-unaligned-missed-illegal",
+    "symptom": "vmove 类指令(vmv.v.v/x/i, vmerge.vvm/vxm/vim, vmv1r-8r.v, vmv.x.s, vfmv/vfmerge 系)在 vd/vs 寄存器组未按 EMUL/NREG 对齐时, DUT 漏检 illegal instruction 直接放行执行并写回; REF(NEMU) 正确陷入 mcause=2/mtval=指令编码。e16m2/e16m4 的 vmerge.vvm 还伴随执行侧源指针腐蚀(vs2 读错组/扩散到未初始化物理寄存器)。可观测判据: difftest ABORT, 日志报 mcause different right=2 wrong=0",
+    "keywords": ["vmove", "vmv.v.v", "vmv.v.x", "vmv.v.i", "vmerge", "vmv4r", "vmv1r", "vmv8r", "未对齐", "misaligned", "EMUL", "对齐检查", "illegal instruction", "regNumIllegal", "vecMove", "寄存器组"],
+    "hint_file": "src/main/scala/xiangshan/backend/fu/FuType.scala",
+    "internals": "仅供参考、不作为匹配依据: 根因链为 VecExceptionGen.scala:262 regNumIllegal 门控在 isVArithMem 上, FuType.scala:119-121 vecArithOrMem=vecArith++vecMem 未含 vecMove=Seq(vmove), 全类 16 条指令译码期绕过对齐检查; VMove.scala 执行期亦无二次检查。测试矩阵实测: vmv.v.v/x/i @ e32m2 与 vmerge.vvm @ e16m2/e16m4/e64m2 均 3/3 ABORT, 对齐对照 GOODTRAP, 同 ELF 重跑 6/6 确定性(Seed=0)。",
+    "upstream_issue": {
+      "repo": "OpenXiangShan/XiangShan",
+      "number": 6410,
+      "url": "https://github.com/OpenXiangShan/XiangShan/issues/6410",
+      "state": "open"
+    },
+    "duplicates": [
+      {
+        "number": 5772,
+        "url": "https://github.com/OpenXiangShan/XiangShan/issues/5772",
+        "state": "open",
+        "note": "同根因, 仅报 vmv4r.v 单条(kunminghu-v3 分支); #6410 经测试矩阵扩展到整个 vmove 类并新增 e16 档执行侧源指针腐蚀现象, 正文显式标注 extends #5772"
+      }
+    ],
+    "local_finding_id": "FU-vmove-unaligned-lmul2-sew-scan",
+    "note": "本仓库 2026-08-25 workflow sweep(4 轮, 95 agent)发现并矩阵化确认, 复现 ELF 在 artifacts/FU-vmove-unaligned-lmul2-sew-scan/variant1|5/。后续 sweep 命中同类 claim(任何 vmove 类指令的 EMUL/NREG 未对齐漏 illegal)应直接跳过; 未覆盖子角度(不应被跳过): 执行侧源指针腐蚀的波形定位(疑 VIAluFix.scala:66 一带 uopIdx 接线), 以及合法对齐用例下是否也可触发腐蚀。",
+    "added_date": "2026-08-25"
+  }
+]
