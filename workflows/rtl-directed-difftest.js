@@ -20,10 +20,11 @@ function envBlock() {
 - REF: xiangshan/ready-to-run/riscv64-nemu-interpreter-so
 - 交叉编译: 先 source scripts/toolchain.sh 得到 $CROSS(gcc 15.1, 支持 RVV 助记符), 再 $CROSS -march=rv64gcv_zicsr -mabi=lp64d -T templates/xiangshan.ld (入口 0x80000000); 结束放 GOODTRAP: .word 0x0000006b
 - 【重要】向量指令一律用 RVV 助记符让汇编器编码(如 vsetvli/vadd.vv/vmv.x.s), 严禁手工计算 .4byte 编码 —— 历史上手搓编码曾把 illegal 指令误判为"emu 不支持 RVV"。参考验证过的编码: vsetvli x0,x6,e32,m1,ta,ma = 0x0d037057
-- 【重要】向量执行前必须使能 mstatus.VS 字段(bits 10:11, 0x600): csrr t0,mstatus; ori t0,t0,0x600; csrw mstatus,t0。写错位(如 1<<25)会导致挂死。且必须设置 mtvec 指向合法 trap handler
+- 【重要】向量执行前必须使能 mstatus.VS 字段(bits 10:9, 值 0x600): csrr t0,mstatus; ori t0,t0,0x600; csrw mstatus,t0。写错位(如 1<<25)会导致挂死。且必须设置 mtvec 指向合法 trap handler(目标标签前显式 .balign 4 —— mtvec.base 掩低 2 位, 未对齐会跳到掩码地址, 表现为挂死/timeout, 易误判为"emu 不支持该指令")
 - 【判据陷阱】未设 mtvec 时 double-trap 会打印伪造 "HIT GOOD TRAP"+乱码 pc; j .(jal-to-self) 也终止为 GOODTRAP; instrCnt/cycleCnt/--dump-db 均不可用作观测通道。唯一可靠判据: ABORT(DUT vs REF 分歧)+提交跟踪中确实提交了向量指令
+- 【判据陷阱·续】(1) 读回向量寄存器一律 vse 存内存再 load, 禁用 vmv.x.s —— 它有已知 F1 符号扩展 bug(ta 策略下高位污染), 用它读回会把已知 bug 的 ABORT 误归因到被测疑点; (2) 未写过的向量寄存器在 difftest 下随机初始化、非 0, 不得断言"未写 vN==0", 自对照要先 vse 存初值到 refbuf 末尾再比对; (3) 32bit 期望值比较用 lwu 而非 lw(lw 符号扩展使 0xdeadbeef 类高位为 1 的期望值永不相等); (4) 外层超时用 timeout -s INT(emu 有 SIGINT 处理会打 PERF/周期数, SIGTERM 的"核心转储"字样有误导性), 并加 stdbuf -oL 防止块缓冲被杀时丢日志
 - emu 已支持波形(2026-08-23 用 EMU_TRACE=1 重编, 原无波形版备份为 build/verilator-compile/emu.notrace.bak): 加 --dump-wave --wave-path=<文件.vcd> 输出 VCD; 大用例文件会很大(几十~上百 MB), 优先仍用提交跟踪定位再按需 dump 小窗口(配 -b/-e 限定周期范围, 减小 VCD 体积)
-- 取证首选提交跟踪: emu 加 -b <开始> -e <结束>, 日志含每退休指令的 pc/编码/dst/data; 需要信号级细节再上 --dump-wave
+- 取证首选提交跟踪: emu 加 --dump-commit-trace -b <开始> -e <结束>(当前构建只加 -b/-e 不输出 commit 行, 必须显式 --dump-commit-trace), 日志含每退休指令的 pc/编码/dst/data; 需要信号级细节再上 --dump-wave
 - GOODTRAP 到达 = 双方一致且自检通过; ABORT = DUT 与 REF 分歧(本身即 bug 证据, 看日志 data 字段的双值)
 - XiangShan 源码在 submodule xiangshan/ (禁止修改其中任何文件)
 - 中间文件一律写 artifacts/<疑点id>/variant<N>/ 下（相对本仓库根目录）`;
@@ -48,7 +49,7 @@ difftest 只抓架构状态分歧; 若疑点属于"不改变架构状态、只�
 1. **先把预期写下来, 并注明预期的来源**。来源只有两类, 判据硬度不同, 结论里必须写清是哪一类:
    - **成文规范**(协议标准、接口契约、文档化的时序约定): 判据硬, 可逐条引用条款;
    - **对代码意图的推断**(读 RTL 推出"这里应该几拍完成、应该按什么顺序发生"): 判据软 —— 推断本身可能就是错的, 那样你看到的"异常"其实是正常行为。必须把推断链写出来, 让别人能推翻它。
-2. **选观察窗口**: 这类问题的判据是"一整段序列"而不是"某一拍的电平", 窗口要长到覆盖一次完整交互(常在数十个时钟周期量级)。先用提交跟踪定位大致时间点, 再用 -b/-e 圈定周期范围控制 VCD 体积, --dump-wave --wave-path=artifacts/<疑点id>/variant<N>/xxx.vcd 导出。
+2. **选观察窗口**: 这类问题的判据是"一整段序列"而不是"某一拍的电平", 窗口要长到覆盖一次完整交互(常在数十个时钟周期量级)。先用提交跟踪(--dump-commit-trace -b/-e)定位大致时间点, 再用 -b/-e 圈定周期范围控制 VCD 体积, --dump-wave --wave-path=artifacts/<疑点id>/variant<N>/xxx.vcd 导出。
 3. **找矛盾**, 三种形态:
    - 违反规范条款;
    - 与代码意图不符: 该发生的没发生 / 不该发生的发生了 / 顺序反了 / 拍数远超预期;
@@ -226,11 +227,13 @@ function makeFilterGate(s, filterlist, suspicionDesc) {
       evidence.push(`${phase} 阶段结果: ${JSON.stringify(newEvidence)}`);
     if (list.length === 0) return null;
     const blob = evidence.join("\n");
-    const candidates = list.filter(
-      (k) =>
+    const candidates = list.filter((k) => {
+      const hb = basename(k.hint_file || k.file);
+      return (
         (k.keywords || []).some((kw) => blob.includes(kw)) ||
-        basename(k.hint_file || k.file) === basename(s.file)
-    );
+        (hb !== "" && hb === basename(s.file))
+      );
+    });
     if (candidates.length === 0) return null;
     if (calls >= MAX_GATE_CALLS) {
       log(`${s.id}: 已知问题关卡调用已达上限 ${MAX_GATE_CALLS}, @${phase} 起不再复核`);
@@ -334,12 +337,12 @@ ${suspicionDesc}
 - masking: ${hypothesis.masking}
 - sensitivity: ${hypothesis.sensitivity}
 
-按本仓库 templates/case-template.S 骨架构造汇编自检用例（setup 设 vsetvli + 可辨识初值 -> trigger -> check 用 vmv.x.s/csrr 读回并 beq/bne 分支到 FAIL -> GOODTRAP .word 0x0000006b），用 riscv64-unknown-elf-gcc 编译成 ELF（入口 0x80000000），跑 emu vs NEMU DiffTest。同时无条件做三件事：
+按本仓库 templates/case-template.S 骨架构造汇编自检用例（setup 设 vsetvli + 可辨识初值 -> trigger -> check 读回并 beq/bne 分支到 FAIL -> GOODTRAP .word 0x0000006b；读回向量寄存器一律 vse 存内存再 load, 禁 vmv.x.s——已知 F1 bug 会污染读回, CSR 用 csrr），用 riscv64-unknown-elf-gcc 编译成 ELF（入口 0x80000000），跑 emu vs NEMU DiffTest。同时无条件做三件事：
 1. 灵敏度对照: 先跑一个"已知应有差异"的对照用例（如不执行清零指令、确认目标状态真的被改变），证明用例不是恒真。
 2. 一致性追问: 即使疑点被证伪，也必须在 trap 返回 / flushPipe / vsetvli 重配置之后再次读回向量寄存器和 CSR，对比 emu 与 NEMU。真 bug 常藏在掩盖原疑点的路径里。
 3. 决定性实验: 读一个从未被写过的相邻向量寄存器，判断污染是否经旁路/检查点扩散。
 
-取证据: emu 加 -b <开始> -e <结束> 提交跟踪。所有源码/ELF/日志存到 artifacts/${s.id}/variant1/。
+取证据: emu 加 --dump-commit-trace -b <开始> -e <结束> 提交跟踪(必须显式 --dump-commit-trace)。所有源码/ELF/日志存到 artifacts/${s.id}/variant1/。
 
 ${waveMethodBlock()}
 ${hypothesis.testability === "timing-only"
@@ -406,9 +409,25 @@ attribution 若是波形上看到的时序/协议矛盾(架构状态不变、dif
     }
 
     // Phase 4: Skeptic — 专门推翻结论
+    // timing-only 类结论 difftest 恒 PASS, 重跑 difftest 不构成复核, 三件事换成波形版
+    const timingOnly =
+      hypothesis.testability === "timing-only" ||
+      (results.isolate &&
+        results.isolate.attribution === "protocol-timing-violation");
     const skepticInput = results.skipped_simulation
       ? `该疑点被 Hypothesize 判为 unreachable（跳过了仿真）。你的任务是逐行读代码复核这个"不可达"判断本身是否成立。`
       : `现有结论摘要: probe=${JSON.stringify(results.probe)}; isolate=${JSON.stringify(results.isolate)}`;
+    const skepticChecks = timingOnly
+      ? `本疑点的结论属于时序/协议类: difftest 对它恒 PASS, 重跑 difftest 确认 PASS 不构成任何复核。必做三件事:
+1. 重现异常序列: 用 artifacts/${s.id}/ 下留下的用例重跑并 dump 同一窗口的波形, 确认 wave_notes 描述的异常序列原样可见; dump 不出来或看不到, 结论即不成立。
+2. 复核"预期"本身: 预期来自成文规范则核对条款原文是否真的这么规定; 来自代码意图推断则逐行重走推断链并尝试推翻 —— 推断若立不住, 看到的"异常"其实是正常行为, verdict 应给 REFUTED 或 DOWNGRADED。
+3. 自对照: 在同一波形(或另跑一份)里找同类交互的其他实例, 确认"异常"不是该设计的常态行为。
+
+${waveMethodBlock()}`
+      : `必做三件事:
+1. 重跑最小复现: 用 artifacts/${s.id}/ 下已留下的 ELF 原样重跑，确认 ABORT（或 PASS）可复现。
+2. 验证灵敏度对照真实性: 检查对照用例确实"已知应有差异"，否则整条证据链作废。
+3. 逐行核对"机制规避"结论: 若结论是被某机制规避，逐行读该机制代码确认它在所有路径上都成立。`;
     results.skeptic = await run("skeptic", `Skeptic ${s.id}`, `你是专门的"推翻者"，任务不是验证而是推翻现有结论。${envBlock()}
 
 ${suspicionDesc}
@@ -416,10 +435,7 @@ ${suspicionDesc}
 假设: ${JSON.stringify(hypothesis)}
 ${skepticInput}
 
-必做三件事:
-1. 重跑最小复现: 用 artifacts/${s.id}/ 下已留下的 ELF 原样重跑，确认 ABORT（或 PASS）可复现。
-2. 验证灵敏度对照真实性: 检查对照用例确实"已知应有差异"，否则整条证据链作废。
-3. 逐行核对"机制规避"结论: 若结论是被某机制规避，逐行读该机制代码确认它在所有路径上都成立。
+${skepticChecks}
 
 verdict: CONFIRMED（结论成立）/ REFUTED（结论被推翻，不回环，标人工复核）/ DOWNGRADED（改写为更弱表述）。${reportHint}`,
       skepticSchema);

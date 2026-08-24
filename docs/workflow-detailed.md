@@ -49,7 +49,7 @@
 - REF：`xiangshan/ready-to-run/riscv64-nemu-interpreter-so`
 - 交叉编译：`source scripts/toolchain.sh` 特性探测选出版本（注意 `/usr/bin` 的 gcc 10.2.0 **不支持** RVV 助记符，本机可用的是 `~/riscv/.../bin` 的 15.1.0），`$CROSS -march=rv64gcv -mabi=lp64d -T templates/xiangshan.ld`（入口 `0x80000000`），结束放 GOODTRAP：`.word 0x0000006b`
 - emu 运行：`./xiangshan/build/emu -b <s> -e <e> -i <elf> --diff xiangshan/ready-to-run/riscv64-nemu-interpreter-so`；GOODTRAP 判定串为 `HIT GOOD TRAP`
-- emu 已支持波形（2026-08-23 用 `EMU_TRACE=1` 重编，原无波形版备份为 `build/verilator-compile/emu.notrace.bak`）：加 `--dump-wave --wave-path=<文件.vcd>` 输出 VCD（已验证：标准 VerilatedVcd 格式，含 clock/reset/difftest 等信号）；文件可能很大，建议配 `-b/-e` 限定周期范围。取证仍优先用提交跟踪：emu 加 `-b/-e`（周期范围），日志含每退休指令的 pc/编码/dst/data；需要信号级细节再上波形。
+- emu 已支持波形（2026-08-23 用 `EMU_TRACE=1` 重编，原无波形版备份为 `build/verilator-compile/emu.notrace.bak`）：加 `--dump-wave --wave-path=<文件.vcd>` 输出 VCD（已验证：标准 VerilatedVcd 格式，含 clock/reset/difftest 等信号）；文件可能很大，建议配 `-b/-e` 限定周期范围。取证仍优先用提交跟踪：emu 加 `--dump-commit-trace -b/-e`（当前构建只加 `-b/-e` 不输出 commit 行，见下方判据陷阱 (7)），日志含每退休指令的 pc/编码/dst/data；需要信号级细节再上波形。
 - GOODTRAP 到达 = 双方一致且自检通过；DiffTest ABORT = DUT 与 REF 分歧（本身即 bug 证据，看日志 `data` 字段的双值）。
 - 【判据陷阱·已踩坑】(1) **mtvec 目标必须 `.balign 4`**：`mtvec.base` 会掩掉低 2 位，TRAPH 标签落在非 4 字节对齐地址时 trap 跳到 base&~3 的掩码地址（通常是上一条指令中间），表现为挂死/timeout，极易被误判为"emu 不支持该指令"或"difftest 框架崩溃"（见 FU-ctrl2-difftest-coredump，2026-08-24）。(2) **FAIL 路径用 `j .` 自旋 + 外层 timeout 时**，日志只显示 `timeout: 核心转储`，无法区分"FAIL 命中"与"挂死/从未到达 CHECK"；复核此类结论必须结合提交跟踪确认 CHECK 确实执行过。(3) **外层 timeout 建议用 `timeout -s INT`**：emu 有 SIGINT 处理，会打印 PERF 与周期数，避免 SIGTERM 的"核心转储"字样误导。(4) **未写过的向量寄存器在 difftest 下随机初始化、非 0**（ABORT 时日志可见 v0-v31 全是随机值）：自检断言"从未写过的 vN == 0"必然 FAIL；正确写法是先 `vse64.v vN` 存到 refbuf 记录初值, 末尾再存一次与 refbuf 比对（自对照, 参考 artifacts/FU-ctrl2-difftest-coredump/variant4/case-min-no-vcompress-fix.S）。(5) **超时/挂死场景必须 `stdbuf -oL`**：emu 输出走块缓冲, 被超时杀死时缓冲区丢失, 日志只剩头部几行; 加 `stdbuf -oL` 才能看到真实进度（如 "Difftest enabled"）。(6) **读回自检值注意 `lw` 会符号扩展**：比较 `0xdeadbeef` 这类高位为 1 的 32bit 期望值时 `lw` 结果是 `0xffffffffdeadbeef`, 与 `li` 生成的零扩展立即数永远不等, 应改用 `lwu`（2026-08-25 踩坑, 见 variant4/dbg-pos-trace.log commit[35]）。(7) **提交跟踪在当前 emu 构建里需显式 `--dump-commit-trace`**：只加 `-b/-e` 不会输出 `commit pc ...` 行。(8) **`vmv.x.s` 存在已知 F1 符号扩展 bug**（如 v0=0x00000008 读回 0xffffffff00000008）: 读回向量寄存器内容一律走 `vse32/vse64` 存内存再 load, 不要用 `vmv.x.s`。
 - 中间文件一律写 `artifacts/<suspicion.id>/variant<N>/`（相对本仓库根）。
@@ -143,7 +143,7 @@
 
 单个 agent（可读写、可跑仿真），做三件事：
 
-1. **首测**：按 `templates/case-template.S` 骨架构造汇编自检用例——setup（vsetvli + 可辨识初值）→ trigger → check（vmv.x.s / csrr 读回 + beq/bne 分支到 FAIL）→ GOODTRAP。变量各出几个变体（vstart/vl/sew/lmul/顺序），一个 ELF 一组。
+1. **首测**：按 `templates/case-template.S` 骨架构造汇编自检用例——setup（vsetvli + 可辨识初值）→ trigger → check（向量寄存器用 `vse` 存内存再 load 读回，**禁 `vmv.x.s`**——已知 F1 bug 会污染读回，见判据陷阱 (8)；CSR 用 csrr + beq/bne 分支到 FAIL）→ GOODTRAP。变量各出几个变体（vstart/vl/sew/lmul/顺序），一个 ELF 一组。
 2. **灵敏度对照（无条件执行）**：先跑一个"已知应有差异"的对照（如不执行清零指令、确认目标状态真的会被改变），证明用例不是恒真。
 3. **一致性追问（无条件执行）**：疑点即使被证伪，也必须在异常/trap 返回、flushPipe、vsetvli 重配置之后再次读回架构状态（向量寄存器、CSR），对比 emu 与 NEMU。另做决定性实验：**读一个从未被写过的相邻向量寄存器**，判断污染是否经旁路/检查点扩散。
 

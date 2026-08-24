@@ -31,4 +31,4 @@ else
   echo "[toolchain] 未找到支持 RVV 助记符的 riscv 交叉编译器。" >&2
   echo "            装新版 XiangShan 工具链(gcc>=12), 或设 CROSS= 指向; 旧 gcc 只能用 .4byte 手工编码。" >&2
 fi
-unset -f __probe_rvv; unset __cross_candidates
+unset -f __probe_rvv; unset __cross_candidates c
