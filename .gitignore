@@ -14,6 +14,7 @@ a.out
 /*.vcd
 /tmp*
 /_env*
+/decode_dirs.txt
 .tmp*
 
 # Python 工具链缓存(scripts/*.py)
