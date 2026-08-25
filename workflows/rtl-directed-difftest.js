@@ -740,12 +740,46 @@ ${reportHint}`,
   return { synthesis, per_suspicion: all, triage };
 }
 
+// ---- 入口校验: 拦截转录截断/缺字段等坏输入, 在跑任何 agent 之前立刻失败 ----
+// 背景: 会话内调用时 args 需由调用方把疑点 JSON 内容搬进工具调用, 历史上发生过
+// 手工转录把某条 claim 截成半句的事故(跑到一半才发现)。校验不能证明内容完整,
+// 但能把"缺字段/过短/明显半句"这类坏输入在开跑前暴露出来, 而不是烧了几十个
+// agent 之后才隐约不对。
+function validateSuspicions(suspicions) {
+  if (!Array.isArray(suspicions) || suspicions.length === 0)
+    throw new Error("args.suspicions 必须是非空数组");
+  const problems = [];
+  suspicions.forEach((s, i) => {
+    const tag = s && s.id ? `疑点 ${s.id}` : `第 ${i + 1} 条`;
+    for (const f of ["id", "file", "claim"]) {
+      if (!s || typeof s[f] !== "string" || s[f].trim() === "")
+        problems.push(`${tag}: 缺少 ${f} 字段`);
+    }
+    if (s && typeof s.claim === "string") {
+      // 半句截断的最常见形态: 以逗号/顿号/括号开引号等非终结符号结尾
+      if (/[,:;({[、,]$/.test(s.claim.trim()))
+        problems.push(
+          `${tag}: claim 以非终结符号结尾, 疑似转录截断: ...${s.claim.slice(-40)}`
+        );
+      if (s.claim.trim().length < 15)
+        problems.push(`${tag}: claim 过短(${s.claim.trim().length} 字), 不足以构成可判定假设`);
+    }
+  });
+  if (problems.length > 0) throw new Error("疑点清单校验失败:\n" + problems.join("\n"));
+  // 可见性防线: 规则检不出的内容级截断(长度正常、结尾无标点), 靠开跑日志的人眼一扫兜底
+  for (const s of suspicions)
+    log(
+      `${s.id}: claim ${s.claim.trim().length}字 | 头: ${s.claim.trim().slice(0, 24)}… | 尾: …${s.claim.trim().slice(-24)}`
+    );
+}
+
 // ---- 外层大迭代(loop-until-dry) ----
 // 每轮队列 = Triage 晋升的新疑点(带证据, 优先) + Synthesize 的 follow_ups;
 // 已验证过的 id 去重跳过。终止: 轮数达 max_sweeps 或队列为空。
 async function main(rawArgs) {
   // args 可能以 JSON 字符串形式传入
   const args = typeof rawArgs === "string" ? JSON.parse(rawArgs) : rawArgs;
+  validateSuspicions(args.suspicions);
   const maxSweeps = args.max_sweeps || 4;
   const filterlist = args.filterlist || [];
   if (filterlist.length > 0) log(`filterlist: ${filterlist.length} 条已知问题`);

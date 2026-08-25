@@ -33,6 +33,8 @@
 
 也可以不跑完整 workflow，按 `docs/workflow-detailed.md` 手动逐阶段对话执行；仿真一律走 `scripts/run_batch.py`（批量并行 + 看门狗 + runs.jsonl 记录，见文档「执行层」一节；`templates/run-one-case.sh` 已弃用，仅作历史参考）。对话方式的好处是可以中途介入（改用例、看证据、跳过某疑点）。
 
+【args 传递纪律】args 里的疑点内容必须先用 `python3 -c "import json;print(json.dumps(json.load(open('<file>')),ensure_ascii=False))"` 之类的命令产出紧凑 JSON 后**整体粘贴**，禁止手工重打/摘抄 —— 历史上转录曾把某条 claim 截成半句、跑到中途才发现。workflow 入口已加校验（缺字段/claim 过短/以非终结符号结尾会直接报错），但校验不能证明内容完整，源头还是要靠整体粘贴。
+
 ### 疑点清单格式
 
 ```json
