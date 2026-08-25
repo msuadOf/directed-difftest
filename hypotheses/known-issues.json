@@ -2,7 +2,21 @@
   {
     "id": "XS-vsetvli-keepvl-stale-specvtype",
     "symptom": "vsetvli/vsetivli 的 keep-vl 形式(rs1=x0&rd=x0)在新旧 vtype 的 vlmul/vsew 比值改变时, 应按 RVV 规范置 vill 使 vl=0, 实际却漏置 vill 且 vl 保留旧值。可观测判据: difftest 在 csrr vl/vtype 或后续向量指令处 ABORT, 日志报 vtype different, right(REF)=0x8000000000000000(vill=1), wrong(DUT)=旧 vtype(如 0xd8)",
-    "keywords": ["vsetvli", "vsetivli", "keep vl", "keep-vl", "rs1=x0", "rd=x0", "specVType", "oldVt", "keepVlIllegal", "vill", "vl 保留", "VTypeBuffer", "VSetRvfWvf"],
+    "keywords": [
+      "vsetvli",
+      "vsetivli",
+      "keep vl",
+      "keep-vl",
+      "rs1=x0",
+      "rd=x0",
+      "specVType",
+      "oldVt",
+      "keepVlIllegal",
+      "vill",
+      "vl 保留",
+      "VTypeBuffer",
+      "VSetRvfWvf"
+    ],
     "hint_file": "src/main/scala/xiangshan/backend/fu/wrapper/VSet.scala",
     "internals": "仅供参考、不作为匹配依据: 根因链为 VTypeBuffer.scala:248 entry.vtype := inst.vpu.vtype 用推测 vtype 而非 FU 写回值更新 vtype 缓冲 -> VSet.scala:104 VSetRvfWvf 用 in.ctrl.vpu.get.specVType 作为 oldVt -> Vsetu.scala:98-100 keepVlIllegal 判定拿旧 vlmul/vsew 与新值比比值, 比值实际已变却判为不变, 漏置 vill。触发条件: keep-vl 的 vsetvli/vsetivli 紧跟一条改变 vlmul/vsew 比值的 vsetivli/vsetvli。vsetvl(寄存器形式)不受影响(variant4 双跑均 GOODTRAP); 比值不变的 keep-vl(A/E 对照组)不触发。修复建议二选一: VTypeBuffer 写回改用 FU 输出值, 或 VsetModule 传入真实 oldVt。",
     "local_finding_id": "F2",
@@ -12,7 +26,19 @@
   {
     "id": "XS-vmvxs-tail-pollution",
     "symptom": "vmv.x.s 把向量寄存器 element 0 搬进整数寄存器时, 若 SEW < XLEN, 目的整数寄存器的高位没有按 RVV 规范做符号扩展, 而是被填成 0xFF。ta(tail-agnostic)策略下复现, tu 策略下被掩盖。可观测判据: difftest ABORT, DUT 侧 rd 形如 0xffffffff_xxxxxxxx, REF 侧为符号扩展后的正确值",
-    "keywords": ["vmv.x.s", "vfmv.f.s", "符号扩展", "sign-extend", "高位", "0xff", "0xFF", "tail", "vta", "element 0", "标量搬移"],
+    "keywords": [
+      "vmv.x.s",
+      "vfmv.f.s",
+      "符号扩展",
+      "sign-extend",
+      "高位",
+      "0xff",
+      "0xFF",
+      "tail",
+      "vta",
+      "element 0",
+      "标量搬移"
+    ],
     "hint_file": "src/main/scala/xiangshan/backend/fu/wrapper/VMove.scala",
     "internals": "仅供参考、不作为匹配依据: 根因链为 VMove 强制 newVl=1 且无差别透传 vta -> ByteMaskTailGen 把 element0 之外全判为 tail -> Mgu 在 ta 模式下填充 0xFF -> 128->64 位截断把污染字节带入 GPR。",
     "upstream_issue": {
@@ -20,7 +46,9 @@
       "number": 5829,
       "url": "https://github.com/OpenXiangShan/XiangShan/issues/5829",
       "state": "open",
-      "labels": ["type: bug/confirmed"]
+      "labels": [
+        "type: bug/confirmed"
+      ]
     },
     "duplicates": [
       {
@@ -37,7 +65,17 @@
   {
     "id": "XS-vstart-vecarith-unobservable",
     "symptom": "怀疑非零 vstart 下(异常返回后从中间元素恢复执行)向量整数算术指令的结果元素取错位置/取错值。实测结论: 该现象在本核上不可观测 —— vstart != 0 时这类指令一律先触发 illegal instruction 异常, 根本执行不到出错逻辑, 因此 difftest 永远抓不到分歧, 属于\"当前架构下不可达\"而非 bug",
-    "keywords": ["vstart", "非零 vstart", "vstart>0", "向量算术", "vadd.vv", "vsadd", "取错元素", "恢复执行", "illegal instruction"],
+    "keywords": [
+      "vstart",
+      "非零 vstart",
+      "vstart>0",
+      "向量算术",
+      "vadd.vv",
+      "vsadd",
+      "取错元素",
+      "恢复执行",
+      "illegal instruction"
+    ],
     "hint_file": "src/main/scala/xiangshan/backend/fu/wrapper/VIAluFix.scala",
     "internals": "仅供参考、不作为匹配依据: 原始 claim 指 VIAluFix.scala:105 把送入 mgu 的 vstart 硬编码为 0.U。三重独立机制锁死该路径: (1) VecExceptionGen.scala:280 译码期对所有向量算术指令做 vstart!=0 的无差别 illegal-instruction 拦截, 覆盖单uop/多uop(LMUL>1)/simple-complex 全部译码分流路径; (2) VIAluFix.sv 执行级自带冗余拦截 exceptionVec_2=|vstart; (3) 网表级: NewMgu.sv 综合后 vstart 输入端口被 firtool 常量折叠直接剔除, 波形 scope 里连 mgu 实例都找不到。",
     "local_finding_id": "S1",
@@ -47,7 +85,24 @@
   {
     "id": "XS-vmove-unaligned-missed-illegal",
     "symptom": "vmove 类指令(vmv.v.v/x/i, vmerge.vvm/vxm/vim, vmv1r-8r.v, vmv.x.s, vfmv/vfmerge 系)在 vd/vs 寄存器组未按 EMUL/NREG 对齐时, DUT 漏检 illegal instruction 直接放行执行并写回; REF(NEMU) 正确陷入 mcause=2/mtval=指令编码。e16m2/e16m4 的 vmerge.vvm 还伴随执行侧源指针腐蚀(vs2 读错组/扩散到未初始化物理寄存器)。可观测判据: difftest ABORT, 日志报 mcause different right=2 wrong=0",
-    "keywords": ["vmove", "vmv.v.v", "vmv.v.x", "vmv.v.i", "vmerge", "vmv4r", "vmv1r", "vmv8r", "未对齐", "misaligned", "EMUL", "对齐检查", "illegal instruction", "regNumIllegal", "vecMove", "寄存器组"],
+    "keywords": [
+      "vmove",
+      "vmv.v.v",
+      "vmv.v.x",
+      "vmv.v.i",
+      "vmerge",
+      "vmv4r",
+      "vmv1r",
+      "vmv8r",
+      "未对齐",
+      "misaligned",
+      "EMUL",
+      "对齐检查",
+      "illegal instruction",
+      "regNumIllegal",
+      "vecMove",
+      "寄存器组"
+    ],
     "hint_file": "src/main/scala/xiangshan/backend/fu/FuType.scala",
     "internals": "仅供参考、不作为匹配依据: 根因链为 VecExceptionGen.scala:262 regNumIllegal 门控在 isVArithMem 上, FuType.scala:119-121 vecArithOrMem=vecArith++vecMem 未含 vecMove=Seq(vmove), 全类 16 条指令译码期绕过对齐检查; VMove.scala 执行期亦无二次检查。测试矩阵实测: vmv.v.v/x/i @ e32m2 与 vmerge.vvm @ e16m2/e16m4/e64m2 均 3/3 ABORT, 对齐对照 GOODTRAP, 同 ELF 重跑 6/6 确定性(Seed=0)。",
     "upstream_issue": {
@@ -65,7 +120,83 @@
       }
     ],
     "local_finding_id": "FU-vmove-unaligned-lmul2-sew-scan",
-    "note": "本仓库 2026-08-25 workflow sweep(4 轮, 95 agent)发现并矩阵化确认, 复现 ELF 在 artifacts/FU-vmove-unaligned-lmul2-sew-scan/variant1|5/。后续 sweep 命中同类 claim(任何 vmove 类指令的 EMUL/NREG 未对齐漏 illegal)应直接跳过; 未覆盖子角度(不应被跳过): 执行侧源指针腐蚀的波形定位(疑 VIAluFix.scala:66 一带 uopIdx 接线), 以及合法对齐用例下是否也可触发腐蚀。",
+    "note": "本仓库 2026-08-25 workflow sweep(4 轮, 95 agent)发现并矩阵化确认, 复现 ELF 在 artifacts/FU-vmove-unaligned-lmul2-sew-scan/variant1|5/。后续 sweep 命中同类 claim(任何 vmove 类指令的 EMUL/NREG 未对齐漏 illegal)应直接跳过; 未覆盖子角度(不应被跳过): 执行侧源指针腐蚀的波形定位(疑 VIAluFix.scala:66 一带 uopIdx 接线), 以及合法对齐用例下是否也可触发腐蚀。 2026-08-25 补波形闭环(artifacts/T-xs-vrgatherei16-e8m8-unexplained-illegal/variant4/): decoderComp 复杂译码输出 exceptionVec_2 上, e8/m8 下 vadd.vv(vd=20 未对齐)@t2163 与 vse8.v(vs3=20 未对齐)@t2164 均被打上 illegal=1 双端 trap(GOODTRAP@TRAPH), 而 vmv.v.v v8,v20(vs2 未对齐)与 v20,v8(vd 未对齐)的触发指令 exceptionVec_2 始终为 0, DUT 放行执行后与 NEMU ABORT(first-div mcause right=2 wrong=0), 三源(vd/vs2/正例)波形确认 regNumIllegal 的 isVArithMem 门控把 vecMove 整类排除。",
+    "added_date": "2026-08-25"
+  },
+  {
+    "id": "XS-vlr-vstart-zero-fill",
+    "symptom": "whole-register load (vl1re/vl2re.v 等) 在 vstart>0(csrw 注入, 无内存异常)时, DUT 把 index<vstart 的目的元素清零(VMergeBuffer 未合并 entry 初值 0 直写回), NEMU(二进制+源码编译双确认)保留旧值。确定性 ABORT: v3_low right=0x7777777777773333 wrong=0x7777777777770000。伴随: vs2r.v 整寄存器 store 也尊重 vstart 跳过前 vstart*SEW 字节(规范要求 whole-register load/store 不受 vl/vstart 影响); DUT 执行后自动清 vstart",
+    "keywords": [
+      "vlr",
+      "vl1re",
+      "vl2re",
+      "vl4re",
+      "vl8re",
+      "vs1r",
+      "vs2r",
+      "vs4r",
+      "vs8r",
+      "whole register load",
+      "whole register store",
+      "整寄存器",
+      "vstart",
+      "清零",
+      "zero fill",
+      "isDependOldVd",
+      "VMergeBuffer",
+      "ignoreOldVd"
+    ],
+    "hint_file": "src/main/scala/xiangshan/backend/decode/DecodeUnit.scala",
+    "internals": "仅供参考: 根因 DecodeUnit.scala:1111 isDependOldVd 不含 vlr -> EntryBundles ignoreOldVd 优化误开 -> 掩蔽区 [0,vstart) 的 VMergeBuffer 初值 0 写回。证据: artifacts/F-vecdecoder-vlr-reserved-decode/variant1/a_vstart9_first.log:197 (seed=0 复现), artifacts/T-tlr-vstart-zeroes-elem-below-vstart/, artifacts/T-ref-binary-source-divergence/ (双 REF 一致)。查重: #5770/#6079/#6292 均 fault 路径, #5832 截断, 判原创 (gh+codex 双确认)。",
+    "local_finding_id": "FU-vlr-vstart-zero-fill",
+    "note": "2026-08-25 第三轮 sweep 确认。用户裁定: 与 #5770(whole-register load 的 vstart/部分更新族)现象相似, 判非原创, 不计入。后续同类 claim(whole-reg load/store × vstart)跳过。",
+    "added_date": "2026-08-25"
+  },
+  {
+    "id": "XS-difftest-garbage-abort-pc",
+    "symptom": "difftest 框架在真实 ABORT 时打印非规范地址 'different at pc = 0xffff2a784a067712', 掩盖真实分歧点; 值按二进制分组撞值、跨 run 部分确定",
+    "keywords": [
+      "difftest",
+      "different at pc",
+      "垃圾 pc",
+      "garbage pc",
+      "trap_pc",
+      "trapVec",
+      "PriorityMux",
+      "DiffTrapEvent",
+      "dontCare",
+      "refproxy",
+      "diff_pc",
+      "commit trace 丢行",
+      "日志撕裂"
+    ],
+    "hint_file": "src/main/scala/xiangshan/backend/rob/Rob.scala",
+    "internals": "仅供参考: Rob.scala:1671-1683 PriorityMux 无 default, hasTrap=0 时取末 wpc 端口 SignExt 出垃圾; DifftestModule(DiffTrapEvent, dontCare=true) 豁免; difftest csrc refproxy.cpp:234 在 commit slot0 无效时回落消费 trap.pc。波形已逐位对上 (artifacts/T-fusion-breaks-trace-diff/variant2/wave_repro.csv)。附带: 提交跟踪丢融合 lui+addiw 行、NEMU/DUT 日志流字符级撕裂。",
+    "local_finding_id": "FU-difftest-garbage-abort-pc",
+    "note": "2026-08-25 第三轮 sweep 波形级确认。用户裁定: 非 ISA 层面 bug(工具链取证通道缺陷), 不计入原创任务。仍值得单独上报修复, 但与 ISA bug 任务无关。",
+    "added_date": "2026-08-25"
+  },
+  {
+    "id": "NEMU-vmvnr-vm0-side-effect-trap",
+    "symptom": "NEMU(REF) 对保留编码 vmv1r.v vm=0 (0x9c2031d7) raise illegal 的同时执行寄存器搬移(trap 后 v3=0x5a5a5a5a, DUT 正确保留哨兵 0x70707070), 且 mtval 停留上一条 trap 编码不更新。ABORT: 'v3_low different right=0xffffffff5a5a5a5a wrong=0xffffffff70707070' + 'mtval different right=0x4002e0d7 wrong=0x9c2031d7'",
+    "keywords": [
+      "NEMU",
+      "vmv1r",
+      "vmv2r",
+      "vmv4r",
+      "vmv8r",
+      "vm=0",
+      "保留编码",
+      "reserved encoding",
+      "副作用",
+      "side effect",
+      "mtval",
+      "REF bug"
+    ],
+    "hint_file": "NEMU riscv/csrc/isa/rvv (二进制, 无源)",
+    "internals": "仅供参考: REF 端 bug, DUT 行为正确。证据 artifacts/vmove-vm-bit-reserved-encoding-not-illegal/variant1/case_trace.log:227-230, artifacts/nemu-vmvnr-vm0-side-effect-trap/variant1/。查重 NEMU #1077(NREG=3 漏 trap)/#597/#696 均不同类 (gh+codex 双确认), 原创 1/3。",
+    "local_finding_id": "FU-nemu-vmvnr-vm0-side-effect-trap",
+    "note": "2026-08-25 第二轮 sweep 确认。用户裁定: 与 NEMU #1077(保留编码解码处理族)现象相似, 判非原创, 不计入。后续同类 claim(保留编码的 trap/副作用/mtval 语义)跳过。未覆盖子角度: vmv2r/4r/8r.v vm=0 是否同样带副作用。",
     "added_date": "2026-08-25"
   }
 ]
