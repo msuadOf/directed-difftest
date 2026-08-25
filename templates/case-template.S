@@ -1,6 +1,46 @@
 # 汇编自检用例模板（骨架）
-# 编译与运行见 templates/run-one-case.sh
+# 编译与运行: 一律经 scripts/run_batch.py（并行槽位+看门狗+runs.jsonl 记录）,
+#             禁止直接调 emu（唯一例外: 确定性重放取波形, 见 run_batch.py --wave）
 # 自检原则: 不依赖人工看波形, check 阶段读回架构状态并分支判定
+#
+# ---- 三条 runner 约定 ----
+# 1. #meta: 行会被 run_batch.py 解析进 runs.jsonl 的 meta 字段, 供 runs_query.py
+#    跨 run 关联分析（哪类参数总在失败）。写上本用例的 ISA 级参数:
+#meta: sew=8 lmul=1 vl=vlmax  # <- 按用例实际参数改
+# 2. 故意的等待/轮询循环必须用 POLL_ 前缀标签（如 POLL_wait:）, 看门狗按符号表
+#    白名单放行; 无进展又无 POLL_ 前缀的循环会被判 KILLED_SPIN 击毙。
+#    （写回值每轮变化的延时循环如 addi t0,t0,-1 不需要标注, 进展检查会放行。）
+# 3. FAIL 落点保持独立标签名 FAIL: 看门狗认出停驻在 FAIL 的自环后直接判
+#    SELF_TEST_FAIL（区别于挂死）, 不再有"FAIL 命中还是挂死"的歧义。
+
+# ---- STATE_FENCE 宏: 关键事件后的全量向量状态快照（"一致性追问"的基础设施） ----
+# 在 trap 返回 / flushPipe / vsetvli 重配置等关键点后调用, 把 vstart/vl/vtype/vcsr
+# 与 v0-v31 全部存进 buf。作用: (1) 全部向量状态经 store/load 变成架构可见, 任何
+# DUT/REF 分歧可被 difftest 抓到; (2) 同一 buf 布局下多个快照点可自对照
+# (fence1 vs fence2), 定位污染发生在哪个事件之后。
+# 【注意】宏会破坏 vtype/vl/vstart（旧值已存入 buf 前 32B）; 若用例还要继续
+# 向量运算, fence 后必须重新 vsetvli。buf 需 .balign 8 且 .space >= 544。
+# 布局: +0 vstart, +8 vl, +16 vtype, +24 vcsr, +32 起 v0..v31（每寄存器 VLEN/8 B, m8 连续存）
+    .macro STATE_FENCE buf, t=t5, u=t6
+    la      \t, \buf
+    csrr    \u, vstart
+    sd      \u, 0(\t)
+    csrr    \u, vl
+    sd      \u, 8(\t)
+    csrr    \u, vtype
+    sd      \u, 16(\t)
+    csrr    \u, vcsr
+    sd      \u, 24(\t)
+    addi    \t, \t, 32
+    vsetvli \u, zero, e8, m8, ta, ma
+    vse8.v  v0, (\t)
+    addi    \t, \t, 128
+    vse8.v  v8, (\t)
+    addi    \t, \t, 128
+    vse8.v  v16, (\t)
+    addi    \t, \t, 128
+    vse8.v  v24, (\t)
+    .endm
 
     .section .text
     .globl _start
@@ -26,7 +66,8 @@ _start:
     # ---- trigger: 触发疑点的指令序列(按假设的 trigger 填写) ----
     # 例: 先写 vstart (csrw vstart, ...) 再执行向量指令, 观察 vstart>0 行为
     # 例: 触发饱和指令后再触发同拍清零语义指令, 观察 vxsat
-    # 变体扫描: 每个变量值单独出一个 ELF, 一组变体一起比较
+    # 变体扫描: 每个变量值单独出一个 .S/ELF, 一组变体一次性交给
+    #   scripts/run_batch.py -o <outdir> a.S b.S c.S ...   并行跑完读 summary.tsv
 
     # ---- check: 读回受影响状态到 GPR 并判定 ----
     # 【禁止用 vmv.x.s 读回】它有已知 F1 符号扩展 bug(ta 策略下高位污染,
@@ -35,24 +76,23 @@ _start:
     la      t5, BUF
     vse8.v  v0, (t5)            # 按 SEW 换 vse16/vse32/vse64
     lbu     t3, 0(t5)           # 32bit 比较用 lwu 而非 lw(lw 符号扩展致永不相等)
-    li      t4, <期望值>
+    li      t4, 0x5A            # <期望值> 按用例改
     bne     t3, t4, FAIL        # 值不对 -> 跳 FAIL(非 GOODTRAP 地址)
     # CSR 读回仍用 csrr(不经向量搬移路径, 无 F1 问题)
 
     # 一致性追问(无条件执行): trap 返回 / flushPipe / vsetvli 重配置之后
-    # 再次 vse 读回向量寄存器和 csrr 读 CSR; 并读一个从未被写过的相邻寄存器,
-    # 判断污染是否经旁路/检查点扩散(与 refbuf 里的初值自对照, 见 setup 注意)。
+    # 打 STATE_FENCE 快照(如 STATE_FENCE FENCE1), 与触发前的快照(FENCE0)自对照,
+    # 并读一个从未被写过的相邻寄存器, 判断污染是否经旁路/检查点扩散。
+    # 快照差分可用: cmp 两段内存逐字节, 或 fence 后对关键字节 load+bne 硬判。
 
     # ---- 通过: 落到 GOODTRAP ----
     j       GOODTRAP
 
 FAIL:
-    # 失败路径: 停在非 GOODTRAP 地址。
-    # 【注意】j .(自旋)+外层 timeout 会以 SIGTERM 杀 emu, 日志显示
-    # "timeout: 核心转储", 且无法区分"FAIL 命中"与"挂死/从未到 CHECK"。
-    # 更可辨识的写法: 故意执行 illegal 指令(如 .word 0) 或跳到一个
-    # 从未定义的地址; 复核时应结合提交跟踪确认 CHECK 确实执行过。
-    j       .                       # 外层建议用 timeout -s INT, emu 会打 PERF/周期数
+    # 失败路径: 停在非 GOODTRAP 地址, 用两条指令自环(单条 jal-to-self 会被 emu
+    # 判 GOODTRAP)。看门狗认出 FAIL 自环 -> SELF_TEST_FAIL, 不会烧到 timeout。
+1:  addi    t6, t6, 0
+    j       1b
 
     .align 2
 GOODTRAP:
@@ -76,3 +116,7 @@ BUF:
     .space  64                  # >= VLEN/8 字节(VLEN=128 即 16B, 留余量)
 refbuf:
     .space  64                  # 自对照初值快照(见 setup 注意)
+FENCE0:
+    .space  544                 # STATE_FENCE 快照区(32B CSR + 512B v0-v31)
+FENCE1:
+    .space  544                 # 第二快照点(与 FENCE0 自对照)

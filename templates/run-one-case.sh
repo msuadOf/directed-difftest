@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# 【已弃用】请改用 scripts/run_batch.py —— 批量并行(全局槽位)、-C 封顶、看门狗止损、
+# runs.jsonl 记录、summary.tsv 一应俱全; 本脚本无看门狗、无记录、串行, 仅作历史参考。
 # 编译单个 .S 为 ELF 并跑 emu vs NEMU DiffTest（骨架）
 # 用法: ./templates/run-one-case.sh <case.S> <artifacts_dir>
 # 环境变量可覆盖: CROSS / EMU / REF / LINKER / TRACE_BEGIN / TRACE_END

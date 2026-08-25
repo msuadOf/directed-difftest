@@ -1,9 +1,21 @@
-# artifacts/ 是仿真中间产物(ELF/VCD/日志), 由固定 pin 的 xiangshan commit + toolchain
-# 随时可重新生成, 体积大(单次 sweep 常见几百 MB~GB), 不适合进 git 历史。
-# 只保留目录骨架(.gitkeep), 真正需要沉淀的结论走 hypotheses/known-issues.json 或 findings.md。
+# artifacts/ 是仿真中间产物(ELF/VCD/日志/runs.jsonl 运行数据库/.slots 槽位锁),
+# 由固定 pin 的 xiangshan commit + toolchain 随时可重新生成, 体积大(单次 sweep
+# 常见几百 MB~GB), 不适合进 git 历史。只保留目录骨架(.gitkeep)。
+# 真正需要沉淀的结论走 hypotheses/known-issues.json、hypotheses/hang-signatures.json
+# 或 findings.md; 注意 runs.jsonl 里的历史运行记录清理后不可重建, 重要结论要及时沉淀。
 artifacts/*
 !artifacts/.gitkeep
 
-# 误编译残留的默认输出文件名
+# 误编译/临时调试残留(正式用例一律放 artifacts/<疑点id>/variant<N>/, 不放仓库根)
 a.out
 /*.log
+/*.S
+/*.elf
+/*.vcd
+/tmp*
+/_env*
+.tmp*
+
+# Python 工具链缓存(scripts/*.py)
+__pycache__/
+*.pyc

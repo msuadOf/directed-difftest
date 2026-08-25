@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "挂死签名库: run_batch.py 看门狗击毙一个 run 后, 用 match 里的两个正则匹配(verdict_re 对终态, locus_re 对符号化停驻位置串如 'KILLED_SPIN@TRAPH'(locus 为符号名去偏移的集合)), 命中则在 runs.jsonl/summary 里标 known_hang=id。这只是给复核 agent 的提示(hint), 不是定论 —— 复核时仍须按 note 核实。每确诊一种新挂死形态, 复核 agent 应产出新条目草稿由主会话合入。与 known-issues.json 的分工: 那边是'验证结论'的去重, 这边是'挂死形态'的秒判。",
+    "id": "_schema-note",
+    "match": {
+      "verdict_re": "^$",
+      "locus_re": "^$"
+    }
+  },
+  {
+    "id": "WD-mtvec-misalign-spin",
+    "symptom": "TRAPH 标签未 .balign 4, mtvec.base 掩掉低 2 位后 trap 跳进掩码地址(通常落在前一条指令中间), 表现为 TRAPH 附近自旋或跑飞; 历史上被误判为 'emu 不支持该指令' / 'difftest 框架崩溃'",
+    "match": {
+      "verdict_re": "KILLED_(SPIN|RUNAWAY)",
+      "locus_re": "TRAPH"
+    },
+    "verify": "objdump -d 看 TRAPH 地址低 2 位是否非 0; 是则确诊, 修 .balign 4 重跑",
+    "origin": "docs/workflow-detailed.md 判据陷阱(1), FU-ctrl2-difftest-coredump 2026-08-24",
+    "added_date": "2026-08-25"
+  },
+  {
+    "id": "WD-vs-disabled-vector-hang",
+    "symptom": "mstatus.VS 未使能(或写错位, 如 1<<25)时, 首条向量指令处挂死或反复 trap; 停驻点在 setup 段(_start 附近)或首条 vsetvli/向量指令 pc",
+    "match": {
+      "verdict_re": "KILLED_(STALL|SPIN)",
+      "locus_re": "_start"
+    },
+    "verify": "查提交跟踪: csrw mstatus 是否执行过、写入值 bits[10:9] 是否为 0b11(0x600); 停驻 pc 的反汇编是否是首条向量指令",
+    "origin": "docs/workflow-detailed.md 环境注意事项, 2026-08-23 踩坑",
+    "added_date": "2026-08-25"
+  }
+]

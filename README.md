@@ -31,7 +31,7 @@
 用 workflow 跑 workflows/rtl-directed-difftest.js，args 用 hypotheses/examples/vstart-vxsat-vlen.json 的内容，max_sweeps 设为 2
 ```
 
-也可以不跑完整 workflow，按 `docs/workflow-detailed.md` 手动逐阶段对话执行；单条用例可用 `templates/run-one-case.sh` 编译并跑 DiffTest。对话方式的好处是可以中途介入（改用例、看证据、跳过某疑点）。
+也可以不跑完整 workflow，按 `docs/workflow-detailed.md` 手动逐阶段对话执行；仿真一律走 `scripts/run_batch.py`（批量并行 + 看门狗 + runs.jsonl 记录，见文档「执行层」一节；`templates/run-one-case.sh` 已弃用，仅作历史参考）。对话方式的好处是可以中途介入（改用例、看证据、跳过某疑点）。
 
 ### 疑点清单格式
 
