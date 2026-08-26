@@ -3,7 +3,7 @@
     .equ PBMT_A, 0x2000000000000000
     .equ PG_CUSTOM, 1
     .equ EXPECT_PF, 0
-    .include "/home/baiyifan/workplace-local/directed-difftest/.claude/worktrees/wf-args-validation/artifacts/F-pbmt-ifetch-uncache-path/variant5/common5.inc"
+    .include "common5.inc"
     .equ PG_CUSTOM, 1
 PAGE_CODE:
     nop
