@@ -10,7 +10,7 @@
 ## 证据
 - `f_s_tor_midregion_load.S/.elf/.log` — S-mode TOR 中段区域 load, ABORT
 - `d_e2_tor_4k_m_ifetch.*` — M-mode 4K TOR 取指用例(波形)
-- `wave/` — cycle2243/2297 frontend.inner_PMPChecker **res_pmp_is_match_2=0**(entry2 按 PMP.scala boundMatch 静态推演应命中 0x80001000)
+- 波形(VCD 未归档, 在 artifacts/T-mmode-pmp-locked-bypass/variant5/wave/ 与 variant2/wave*/): cycle2243/2297 frontend.inner_PMPChecker **res_pmp_is_match_2=0**(entry2 按 PMP.scala boundMatch 静态推演应命中 0x80001000)
 - `variant5-summary.tsv` — 变体矩阵; `variant2/` — TOR/NAPOT 对照批(NAPOT 同 run 生效, TOR 全不匹配)
 
 ## 未闭合
