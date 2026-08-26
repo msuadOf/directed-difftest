@@ -9,6 +9,8 @@
 | D-sstc-stce-clear-drops-pending-stip | 清 menvcfg.STCE 同拍撤销已 pending 的 STIP | RTL bug, Sstc 规范违例 | **原创 1/3** |
 | E-nc-alias-store-invisibility | 已提交的 cached store 对同地址 NC 别名 load 不可见 | 用户裁定不计(同类 C/NC 族) | 记录点 |
 
+| F-nemu-sdtrig-action-warl | NEMU tdata1 ACTION=1 WARL 缺口(DUT 对/REF 错) | NEMU master 源码 bug, 查重无同类 | **候选 2/3(待裁定)** |
+
 ## 记录点(不计原创)
 
 | C-pmp-tor-never-match | PMP TOR deny 不被执行 | DUT+NEMU 共享偏离(difftest 不可见); 上游指出原用例 pmpaddr 编码亦有误 | 记录点, 值得分别上报 |
