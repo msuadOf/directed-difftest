@@ -1,2 +1,0 @@
-case	verdict	cycles	instrs	host_ms	stop_sym	known_hang	review
-artifacts/T-mmode-pmp-locked-bypass/variant2/s_mode_l1_tor_load.S	WALL_TIMEOUT	114996	16511	600082	HAND_M+0x1a	-	pending

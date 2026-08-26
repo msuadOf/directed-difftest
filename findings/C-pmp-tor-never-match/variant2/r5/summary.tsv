@@ -1,4 +1,0 @@
-case	verdict	cycles	instrs	host_ms	stop_sym	known_hang	review
-artifacts/T-mmode-pmp-locked-bypass/variant2/l1_tor88_load.S	SELF_TEST_FAIL	3722	1409	32014	FAIL	-	-
-artifacts/T-mmode-pmp-locked-bypass/variant2/l1_tor88_ifetch.S	SELF_TEST_FAIL	3745	1280	32027	FAIL+0x2	-	-
-artifacts/T-mmode-pmp-locked-bypass/variant2/s_mode_l1_tor_load.S	CYCLE_CAP	120000	17239	534300	HAND_M+0x22	-	pending

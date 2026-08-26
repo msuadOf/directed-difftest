@@ -1,7 +1,6 @@
 # findings/ — 确认/记录的 bug 归档
 
-每个 bug 一个自包含子目录: 结论说明(README.md) + 最小复现 ELF/.S + 关键证据(日志/波形/波形抽取 CSV)。
-原始全量中间产物在 artifacts/<疑点id>/,这里只留结论级证据。
+每个 bug 一个自包含子目录, **从 .S 源码开始可复现**(make run 编译+跑 difftest+机检判定; 对照用例 make control)。目录内不放预编译 ELF, VCD 波形留在 artifacts/ 原地。
 
 | 目录 | bug | 定性 | 原创性 |
 |---|---|---|---|

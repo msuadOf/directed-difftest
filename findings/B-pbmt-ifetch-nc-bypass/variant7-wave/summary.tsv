@@ -1,2 +1,0 @@
-case	verdict	cycles	instrs	host_ms	stop_sym	known_hang	review
-artifacts/F-pbmt-ifetch-uncache-path/variant5/if01.S	ABORT	2705	119	23058	LLOOP+0x4	-	-

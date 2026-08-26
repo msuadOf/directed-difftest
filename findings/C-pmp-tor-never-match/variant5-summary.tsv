@@ -1,2 +1,0 @@
-case	verdict	cycles	instrs	host_ms	stop_sym	known_hang	review
-artifacts/T-mmode-pmp-locked-bypass/variant5/g_s_tor_selfbase_load.S	SELF_TEST_FAIL	6074	3354	24011	FAIL	-	-

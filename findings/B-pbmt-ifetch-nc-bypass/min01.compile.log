@@ -1,3 +1,0 @@
-/home/baiyifan/workplace-local/directed-difftest/.claude/worktrees/wf-args-validation/artifacts/F-pbmt-ifetch-uncache-path/variant5/min01.S: Assembler messages:
-/home/baiyifan/workplace-local/directed-difftest/.claude/worktrees/wf-args-validation/artifacts/F-pbmt-ifetch-uncache-path/variant5/min01.S:146: 错误：symbol `PAGE_CODE' is already defined
-/home/baiyifan/workplace-local/directed-difftest/.claude/worktrees/wf-args-validation/artifacts/F-pbmt-ifetch-uncache-path/variant5/min01.S:149: 错误：symbol `PAGE_CODE_END' is already defined
