@@ -1,5 +1,15 @@
 [
   {
+    "id": "XS-pbmt-ifetch-nc-bypass-vs-nemu-flat-memory",
+    "symptom": "经 Svpbmt pbmt!=0(NC/IO) 页取指, emu 的 InstrUncache D 通道返回 0x0, 前端译码 illegal(mcause=2), 与 NEMU ABORT(100% 复现)。定性: 非 RTL bug、非 difftest 伪影 —— 指令数据是 PTE 改 NC 前经 cached store 写入、脏行停留 L2 未写回 DRAM, NC 旁路读回了 DRAM 复位值 0; ISA 本不保证 C 与 NC 访问间一致性(软件需 fence/cbo.flush), NEMU 平坦内存模型天然\"一致\"故必分歧。判定: NC 非一致性语义 × 参考模型差异, 不计入原创 ISA bug",
+    "keywords": ["PBMT", "pbmt", "NC", "IO", "取指", "ifetch", "InstrUncache", "返回 0", "d_data=0", "非一致性", "coherence", "脏行", "L2", "cbo.flush", "平坦内存"],
+    "hint_file": "src/main/scala/xiangshan/frontend (IfuUncacheUnit)",
+    "internals": "仅供参考: 波形 if01.vcd t=2648-2688: AR addr=0x80004000 走 chi_llcBridge(DRAM 通路)而非 mmioBridge, R data=0x0 是 DRAM 真实回读; 全时间窗 L2 无 AW 写回。对照: 同 NC 页 store+load 都走 uncache, store 直写 DRAM 故 load 读回真值。若 cbo.flush 后取指仍返 0 才是通路 bug(未测)。",
+    "local_finding_id": "F-pbmt-ifetch-uncache-path",
+    "note": "2026-08-26 第三轮 sweep 确认现象, 注入点定位(artifacts/F-l2-membacktype-mm-read-zero-injection-point/)排除 SimMMIO 伪影与通路清零两种解释。用户裁定: 有意思的记录点(取指返 0 形态罕见), 但属语义/环境差异, 不计入原创任务。后续 sweep 命中\"NC/IO 页取指/load 读到旧值或 0\"类现象直接跳过, 除非先做了 cbo.flush/fence 写回。",
+    "added_date": "2026-08-26"
+  },
+  {
     "id": "XS-vsetvli-keepvl-stale-specvtype",
     "symptom": "vsetvli/vsetivli 的 keep-vl 形式(rs1=x0&rd=x0)在新旧 vtype 的 vlmul/vsew 比值改变时, 应按 RVV 规范置 vill 使 vl=0, 实际却漏置 vill 且 vl 保留旧值。可观测判据: difftest 在 csrr vl/vtype 或后续向量指令处 ABORT, 日志报 vtype different, right(REF)=0x8000000000000000(vill=1), wrong(DUT)=旧 vtype(如 0xd8)",
     "keywords": ["vsetvli", "vsetivli", "keep vl", "keep-vl", "rs1=x0", "rd=x0", "specVType", "oldVt", "keepVlIllegal", "vill", "vl 保留", "VTypeBuffer", "VSetRvfWvf"],
