@@ -1,0 +1,5 @@
+time,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_ar_bits_addr,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_ar_bits_id,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_ar_ready,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_ar_valid,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_r_bits_data,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_r_bits_id,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_r_valid,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_ar_bits_addr,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_ar_bits_id,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_ar_ready,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_ar_valid,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_r_bits_data,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_r_bits_id,TOP.SimTop.cpu.l_soc.chi_mmioBridge_opt.auto_axi4_out_r_valid
+2668,0x80004000,0x0,1,1,0x0,0x0,0,0x10000010,0x0,1,0,0x0,0x0,0
+2669,0x80004000,0x0,1,0,0x0,0x0,0,0x10000010,0x0,1,0,0x0,0x0,0
+2676,0x80004000,0x0,1,0,0x0,0x0,1,0x10000010,0x0,1,0,0x0,0x0,0
+2677,0x80004000,0x0,1,0,0x0,0x0,0,0x10000010,0x0,1,0,0x0,0x0,0

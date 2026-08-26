@@ -1,0 +1,2 @@
+time,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_aw_bits_addr,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_aw_valid,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_b_valid,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_w_bits_data,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_w_bits_last,TOP.SimTop.cpu.l_soc.chi_llcBridge_opt.auto_axi4_out_w_valid
+0,0x1e7aec76c2ace,0,0,0x7cb43e67da6f56dffca6eff31add7fe6a65f583056e4373905c9fae7af892b66,1,0

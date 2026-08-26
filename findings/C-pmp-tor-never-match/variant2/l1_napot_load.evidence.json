@@ -1,0 +1,643 @@
+{
+ "reason": "self_test_fail",
+ "sig": "SELF_TEST_FAIL@FAIL",
+ "known_hang": null,
+ "stop_pc": "0x80000060",
+ "stop_sym": "FAIL+0x2",
+ "last_commits": [
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x8000005e",
+   "sym": "FAIL",
+   "inst": "000f8f93",
+   "wen": "1",
+   "dst": "31",
+   "data": "0000000000000000"
+  },
+  {
+   "pc": "0x80000060",
+   "sym": "FAIL+0x2",
+   "inst": "fffff06f",
+   "wen": "0",
+   "dst": "00",
+   "data": "0000000000000000"
+  }
+ ],
+ "log_tail": [
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_mean,                   14",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_sampled,                 4737",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_underflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_overflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_0_1,                    7",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_1_2,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_2_3,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_3_4,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_4_5,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_5_6,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_6_7,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_7_8,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_8_9,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_9_10,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_10_11,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_11_12,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_12_13,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_13_14,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_14_15,                   13",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: lcrd_inflight_15_16,                 4704",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_sum,                    6",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_mean,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_sampled,                 4737",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_underflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_overflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_0_1,                 4731",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_1_2,                    6",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_2_3,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_3_4,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_4_5,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_5_6,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_6_7,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_7_8,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_8_9,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_9_10,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_10_11,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_11_12,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_12_13,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_13_14,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxrsp: util_14_15,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_sum,                70833",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_mean,                   14",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_sampled,                 4737",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_underflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_overflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_0_1,                    7",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_1_2,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_2_3,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_3_4,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_4_5,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_5_6,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_6_7,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_7_8,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_8_9,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_9_10,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_10_11,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_11_12,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_12_13,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_13_14,                    1",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_14_15,                   13",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: lcrd_inflight_15_16,                 4704",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_sum,                    6",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_mean,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_sampled,                 4737",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_underflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_overflow,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_0_1,                 4731",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_1_2,                    6",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_2_3,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_3_4,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_4_5,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_5_6,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_6_7,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_7_8,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_8_9,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_9_10,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_10_11,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_11_12,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_12_13,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_13_14,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.linkMonitor_2.LCredit2Decoupled_rxdat: util_14_15,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.core.backend.inner.ctrlBlock.rob: robHeadPC,           2147483744",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    6",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.grantBuf: max_grant_grantack_period_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.reqBuf: max_reqBuf_timer_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.reqBuf: max_reqBuf_timer_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.reqBuf: max_reqBuf_timer_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.reqBuf: max_reqBuf_timer_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                 1453",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                 1452",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                 1451",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                 1450",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "[PERF ][time=                4737] SimTop.cpu.l_soc.core_with_l2.l2top.inner.l2cache.slices_0.mshrCtl: mshr_latency_max,                    0",
+  "Seed=0 Guest cycle spent: 4,738 (this will be different from cycleCnt if emu loads a snapshot)",
+  "Host time spent: 40,038ms"
+ ]
+}
