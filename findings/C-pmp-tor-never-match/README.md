@@ -1,26 +1,22 @@
-# C — PMP 高索引(≥2)条目 deny 不被执行(emu 与随附 NEMU 二进制共享)【记录点, 不计原创】
+# C — "PMP TOR 失效" 系列【最终判: 测试伪象, 双模型 PMP 实现均正确, 无 bug】
 
-**定性(2026-08-26 三次修正后的终版)**: 最初判"TOR 从不匹配"为原创 bug → 上游指出上报用例 pmpaddr 编码丢位(0x2000400 应为 0x20000400) → 本地复核 agent 矩阵重测定性: **deny 条目放在 entry 索引≥2 时不被执行(TOR/NAPOT 皆然), 放 entry 0/1 时正常拦截; emu 与随附 NEMU REF 二进制共享此行为**。另发现 **pmpcfg0 byte≥3 写入: DUT 接受(规范正确) vs NEMU 二进制丢弃 → difftest ABORT**, DUT 对 REF 错, NEMU 侧 bug 候选。
+**三修终版(2026-08-27, 插桩 master NEMU 直证)**: 本目录历史结论("TOR 从不匹配"→"索引≥2 条目不生效"→"双模型共享偏离")全部为**测试方编码/语义误读**, 撤销。
+
+## 两个连环误读
+1. **pmpcfg 0x0F 不是 A=OFF**: bit3 属于 A 字段(bits[4:3]), 0x0F = A=01(TOR)+RWX, 即 "TOR RWX allow-all"——用它当 e0 会盖住全部地址
+2. **PMP 优先级是最低编号匹配条元优先**(Priv 1.12 §3.7): e0 allow-all 匹配一切后, 高编号 deny 条目根本不会被查询。"deny@e2 不生效"正是 e0 盖住的正常表现; c_prio 之所以 deny 生效, 是其 e0 上界恰止于 0x80001000, DENY_DATA(0x80001040)落在界外
+
+## 直证手段(可复用)
+master NEMU(自编, kunminghu-v3-ref config)插桩 pmp_check 打印匹配条目:
+`[PMPDBG] entry 0 matched addr=0x8000180 lower=0 tor=0x0000fffffffff000 cfg=0f ...` → e0 匹配并 allow, 循环 break, e2 从未被查询。NEMU 源码 mmu.c:158 mmu_refresh_pmp_cache 的 TOR lower 继承无条件、优先级首匹配即出——与规范一致; XiangShan PMP.scala 同语义。
+
+## 结论
+- XiangShan emu 与 NEMU(master 及随附二进制)的 PMP(TOR/NAPOT/优先级/锁定/粒度)在本构建行为一致且符合规范, **无原创 bug 可计**
+- 历史上游维护者指出的 pmpaddr 丢位(0x2000400)也属实, 属同一系列用例质量事故
+- 教训沉淀见 memory: pmpaddr>>2、A 字段位序、**优先级最低编号优先**、勿手搓编码、插桩 REF 是分歧判定的终极手段
 
 ## 复现(从源码)
 ```
-make run       # f_s_tor_midregion_load.S: deny@e2 → 双模型放行 → SELF_TEST_FAIL(无 trap)
-               # 注意: 该用例 pmpaddr 亦含历史编码丢位, 保留原样; 判定以下述矩阵为准
-make control   # c_prio_napot_e0_allow_e1_deny_s_load.S: deny@e1 → 双模型拦截 → GOODTRAP
+make run       # f_s_tor_midregion_load.S: SELF_TEST_FAIL(含历史编码错误, 留档)
+make control   # c_prio...: GOODTRAP(NAPOT deny 在 e0 未覆盖区生效)
 ```
-干净复验矩阵(编码修正+CSR 写回校验+--dump-ref-trace 直证 NEMU 行为, 不依赖 ABORT 推断): artifacts/T-tor-shared-deviation-audit/(n1 TOR@e2 放行 / n5 TOR@e1 拦截 / n6 NAPOT@e2 放行 / n7 NAPOT@e1 拦截 / d3-d4 byte3 写入分歧)。
-
-## 关键证据
-- n5 vs n1: 同一 S-mode lw 0x80001800, deny 条目同区域同权限, 仅差 entry 索引(e1 拦/e2 放行); pmpcfg0 回读 0x88000F 确认写入
-- n1 的 REF 侧直证: NEMU trace 显示 S-mode(mode:1)实际读出载荷 0x5a5a5a5a, 全程 0 条 "isa pmp check failed"; n5 的 REF 侧同路径报 paddr.c:305 拒绝
-- NEMU master 源码(OpenXiangShan/NEMU)静态读正确(TOR 无条件用 pmpaddr[i-1], 最低索引优先)——**随附二进制旧于 #1012, 与源码不符**; 上报 NEMU 须注明二进制版本
-- 探针特权级已三重验证为 S-mode(M-only csrr 触发 cause=2、ecall cause=9、MPP=1)
-
-## 上报建议
-- 报 XiangShan: n5/n1/n6 矩阵(deny@e2 不生效; RTL 静态读 PMP.scala 正确, 运行时不生效根因未定位, 候选 checker 接线/构建参数)
-- 报 NEMU: 同矩阵 REF 侧行为 + d3/d4 byte≥3 写入丢失(二进制, 非源码)
-
-## 教训(pmpaddr/pmpcfg 编码陷阱)
-- pmpaddr 单位 4 字节: 物理地址 >>2, 十六进制字面量易丢位(0x80001000>>2=0x20000400 不是 0x2000400)
-- pmpcfg A 字段在 bits[4:3]: 0x0F=A=OFF 非 TOR RWX; TOR=0x08/NA4=0x10/NAPOT=0x18
-- "无 ABORT ⇒ NEMU 同意"不可靠(trap 事件豁免比对、GOODTRAP 伪阴性先例); NEMU 行为要 --dump-ref-trace 直证
