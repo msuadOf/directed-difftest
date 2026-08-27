@@ -2,11 +2,12 @@
 
 每个 bug 一个自包含子目录, **从 .S 源码开始可复现**(make run 编译+跑 difftest+机检判定; 对照用例 make control)。目录内不放预编译 ELF, VCD 波形留在 artifacts/ 原地。
 
-## 原创计数 (1/3, 2026-08-26 更新)
+## 原创计数 (2/3, 2026-08-28 更新)
 
 | 目录 | bug | 定性 | 原创性 |
 |---|---|---|---|
 | D-sstc-stce-clear-drops-pending-stip | 清 menvcfg.STCE 同拍撤销已 pending 的 STIP | RTL bug, Sstc 规范违例 | **原创 1/3** |
+| G-sfence-nonleaf-ptcache | 过滤型 sfence/hfence 漏清非叶 PTW 缓存(l1v/l2v) → 旧映射 | RTL bug, 需 master NEMU 复现 | **原创 2/3** |
 | E-nc-alias-store-invisibility | 已提交的 cached store 对同地址 NC 别名 load 不可见 | 用户裁定不计(同类 C/NC 族) | 记录点 |
 
 | F-nemu-sdtrig-action-warl | NEMU tdata1 ACTION=1 WARL 缺口(DUT 对/REF 错) | NEMU master 源码 bug, 查重无同类 | **候选 2/3(待裁定)** |
